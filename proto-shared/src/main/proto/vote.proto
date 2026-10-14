@@ -6,6 +6,22 @@ option java_package = "com.g3.vote.proto";
 option java_multiple_files = true;
 
 
+message LoginRequest {
+  string login = 1;
+  bytes password_hash = 2;
+}
+
+// token : vide si echec. role vaut ELECTEUR, ORGANISATEUR ou SCRUTATEUR.
+// doit_changer_mdp est vrai a la premiere connexion.
+message LoginResponse {
+  bool success = 1;
+  string token = 2;
+  string role = 3;
+  bool doit_changer_mdp = 4;
+  string message = 5;
+}
+
+
 message PublicKeyRequest {}
 
 message PublicKeyResponse {
@@ -14,7 +30,7 @@ message PublicKeyResponse {
 
 
 message VoteRequest {
-  string electeur_id = 1;
+  string session_token = 1;
   bytes vote_chiffre = 2;
 }
 
@@ -48,23 +64,30 @@ message DecryptedResultFromScrutateur {
 }
 
 
-message RegisterRequest {
-  string electeur_id = 1;
-  string login = 2;
-  bytes password_chiffre = 3;
+// Reserve a l'organisateur : le serveur refuse si le token n'est pas le sien.
+message AjouterElecteurRequest {
+  string session_token = 1;
+  string electeur_id = 2;  // 5 caracteres maximum
+  string login = 3;
+  bytes password_hash = 4;
+  string nom = 5;
+  string prenom = 6;
 }
 
-message RegisterResponse {
+message AjouterElecteurResponse {
   bool success = 1;
   string message = 2;
 }
 
 
 message ClientMessage {
+  reserved 2; // ancien register_request : l'electeur ne s'inscrit plus lui-meme
+
   oneof payload {
     PublicKeyRequest public_key_request = 1;
-    RegisterRequest register_request = 2;
     VoteRequest vote_request = 3;
     ResultRequest result_request = 4;
+    LoginRequest login_request = 5;
+    AjouterElecteurRequest ajouter_electeur_request = 6;
   }
 }
