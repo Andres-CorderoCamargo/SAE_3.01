@@ -3,6 +3,7 @@ import com.g3.vote.proto.ClientMessage;
 import com.g3.vote.proto.RegisterRequest;
 import com.g3.vote.proto.RegisterResponse;
 import com.google.protobuf.ByteString;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -57,7 +58,8 @@ public class ElecteurService {
 
 
     private static byte[] chiffrerMotDePasse(String mdp) {
-        // todo implementer chiffrement
-        return mdp.getBytes();
+
+        String mdpHache = BCrypt.hashpw(mdp, BCrypt.gensalt(12));
+        return mdpHache.getBytes();
     }
 }
