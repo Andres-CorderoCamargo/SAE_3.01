@@ -17,66 +17,66 @@ public class TestReferendum {
         created.add("id", "42");
 
         // Cas qui doivent réussir (normalement)
-        probarSucces("Création correcte", new fakeConnection(created),
+        testerSucces("Création correcte", new fakeConnection(created),
                 TOKEN, Q, "Oui", "Non", 10, "42");
-        probarSucces("Durée minimale (1 min)", new fakeConnection(created),
+        testerSucces("Durée minimale (1 min)", new fakeConnection(created),
                 TOKEN, Q, "Oui", "Non", 1, "42");
-        probarSucces("Durée maximale (1440 min)", new fakeConnection(created),
+        testerSucces("Durée maximale (1440 min)", new fakeConnection(created),
                 TOKEN, Q, "Oui", "Non", 1440, "42");
-        probarSucces("Question de 200 caractères (limite)", new fakeConnection(created),
+        testerSucces("Question de 200 caractères (limite)", new fakeConnection(created),
                 TOKEN, "x".repeat(200), "Oui", "Non", 10, "42");
 
         // Contenu du message envoyé à l'urne
         verifierMessageEnvoye(created);
 
         // Pas de token : on ne touche pas au réseau
-        probarErrorSansReseau("Token null", null, Q, "Oui", "Non", 10,
+        testerErrorSansReseau("Token null", null, Q, "Oui", "Non", 10,
                 ReferendumError.NON_CONNECTE);
 
         // Champs invalides (validation locale, sans réseau)
-        probarErrorSansReseau("Question null", TOKEN, null, "Oui", "Non", 10,
+        testerErrorSansReseau("Question null", TOKEN, null, "Oui", "Non", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Question vide", TOKEN, "", "Oui", "Non", 10,
+        testerErrorSansReseau("Question vide", TOKEN, "", "Oui", "Non", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Question d'espaces", TOKEN, "   ", "Oui", "Non", 10,
+        testerErrorSansReseau("Question d'espaces", TOKEN, "   ", "Oui", "Non", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Question trop longue (201)", TOKEN, "x".repeat(201), "Oui", "Non", 10,
+        testerErrorSansReseau("Question trop longue (201)", TOKEN, "x".repeat(201), "Oui", "Non", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Choix 1 vide", TOKEN, Q, "", "Non", 10,
+        testerErrorSansReseau("Choix 1 vide", TOKEN, Q, "", "Non", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Choix 0 vide", TOKEN, Q, "Oui", " ", 10,
+        testerErrorSansReseau("Choix 0 vide", TOKEN, Q, "Oui", " ", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Choix identiques", TOKEN, Q, "Oui", "Oui", 10,
+        testerErrorSansReseau("Choix identiques", TOKEN, Q, "Oui", "Oui", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Choix identiques (casse différente)", TOKEN, Q, "Oui", " oui ", 10,
+        testerErrorSansReseau("Choix identiques (casse différente)", TOKEN, Q, "Oui", " oui ", 10,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Durée 0", TOKEN, Q, "Oui", "Non", 0,
+        testerErrorSansReseau("Durée 0", TOKEN, Q, "Oui", "Non", 0,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Durée négative", TOKEN, Q, "Oui", "Non", -5,
+        testerErrorSansReseau("Durée négative", TOKEN, Q, "Oui", "Non", -5,
                 ReferendumError.CHAMPS_INVALIDES);
-        probarErrorSansReseau("Durée trop longue (1441)", TOKEN, Q, "Oui", "Non", 1441,
+        testerErrorSansReseau("Durée trop longue (1441)", TOKEN, Q, "Oui", "Non", 1441,
                 ReferendumError.CHAMPS_INVALIDES);
 
         // Erreurs renvoyées par l'urne
-        probarError("Serveur : INVALID_TOKEN", new fakeConnection(erreur("INVALID_TOKEN")),
+        testerError("Serveur : INVALID_TOKEN", new fakeConnection(erreur("INVALID_TOKEN")),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.NON_CONNECTE);
-        probarError("Serveur : NOT_AUTHORIZED", new fakeConnection(erreur("NOT_AUTHORIZED")),
+        testerError("Serveur : NOT_AUTHORIZED", new fakeConnection(erreur("NOT_AUTHORIZED")),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.NON_AUTORISE);
-        probarError("Serveur : ELECTION_ALREADY_RUNNING", new fakeConnection(erreur("ELECTION_ALREADY_RUNNING")),
+        testerError("Serveur : ELECTION_ALREADY_RUNNING", new fakeConnection(erreur("ELECTION_ALREADY_RUNNING")),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.REFERENDUM_DEJA_EN_COURS);
-        probarError("Serveur : BAD_FORMAT", new fakeConnection(erreur("BAD_FORMAT")),
+        testerError("Serveur : BAD_FORMAT", new fakeConnection(erreur("BAD_FORMAT")),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.CHAMPS_INVALIDES);
-        probarError("Serveur : code inconnu", new fakeConnection(erreur("QUELQUE_CHOSE")),
+        testerError("Serveur : code inconnu", new fakeConnection(erreur("QUELQUE_CHOSE")),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.ERREUR_SERVEUR);
-        probarError("Serveur : ERROR sans code", new fakeConnection(erreur(null)),
+        testerError("Serveur : ERROR sans code", new fakeConnection(erreur(null)),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.ERREUR_SERVEUR);
 
         // Problèmes de communication
-        probarError("Timeout (receive renvoie null)", new fakeConnection(null),
+        testerError("Timeout (receive renvoie null)", new fakeConnection(null),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.TIMEOUT);
-        probarError("Panne réseau (IOException)", new fakeConnection(null, true),
+        testerError("Panne réseau (IOException)", new fakeConnection(null, true),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.ERREUR_RESEAU);
-        probarError("Réponse inattendue (LOGIN_OK)", new fakeConnection(new Message(MessageType.LOGIN_OK)),
+        testerError("Réponse inattendue (LOGIN_OK)", new fakeConnection(new Message(MessageType.LOGIN_OK)),
                 TOKEN, Q, "Oui", "Non", 10, ReferendumError.REPONSE_INATTENDUE);
 
         System.out.println("\nRésultat : " + ok + " OK, " + ko + " KO");
@@ -89,18 +89,18 @@ public class TestReferendum {
         try {
             new ReferendumService(c).creer(TOKEN, "  " + Q + "  ", " Oui ", " Non ", 10);
         } catch (ReferendumException e) {
-            verificar("Message envoyé : exception inattendue " + e.getError(), false);
+            verifier("Message envoyé : exception inattendue " + e.getError(), false);
             return;
         }
         Message m = c.lastSent;
-        verificar("Message envoyé : un message a été envoyé", m != null);
+        verifier("Message envoyé : un message a été envoyé", m != null);
         if (m == null) return;
-        verificar("Message envoyé : type CREATE_REFERENDUM", m.getType() == MessageType.CREATE_REFERENDUM);
-        verificar("Message envoyé : token", TOKEN.equals(m.get("token")));
-        verificar("Message envoyé : question sans espaces autour", Q.equals(m.get("question")));
-        verificar("Message envoyé : option1 sans espaces", "Oui".equals(m.get("option1")));
-        verificar("Message envoyé : option0 sans espaces", "Non".equals(m.get("option0")));
-        verificar("Message envoyé : durée en texte", "10".equals(m.get("duree")));
+        verifier("Message envoyé : type CREATE_REFERENDUM", m.getType() == MessageType.CREATE_REFERENDUM);
+        verifier("Message envoyé : token", TOKEN.equals(m.get("token")));
+        verifier("Message envoyé : question sans espaces autour", Q.equals(m.get("question")));
+        verifier("Message envoyé : option1 sans espaces", "Oui".equals(m.get("option1")));
+        verifier("Message envoyé : option0 sans espaces", "Non".equals(m.get("option0")));
+        verifier("Message envoyé : durée en texte", "10".equals(m.get("duree")));
     }
 
     // Fabrique une réponse ERROR (code = null → ERROR sans champ code)
@@ -110,43 +110,43 @@ public class TestReferendum {
         return m;
     }
 
-    private static void probarSucces(String nombre, Connection c, String token,
+    private static void testerSucces(String nom, Connection c, String token,
                                      String q, String o1, String o0, int duree,
-                                     String idEsperado) {
+                                     String idAttendu) {
         try {
             String id = new ReferendumService(c).creer(token, q, o1, o0, duree);
-            verificar(nombre, idEsperado.equals(id));
+            verifier(nom, idAttendu.equals(id));
         } catch (ReferendumException e) {
-            verificar(nombre + " (exception inattendue : " + e.getError() + ")", false);
+            verifier(nom + " (exception inattendue : " + e.getError() + ")", false);
         }
     }
 
-    private static void probarError(String nombre, Connection c, String token,
+    private static void testerError(String nom, Connection c, String token,
                                     String q, String o1, String o0, int duree,
-                                    ReferendumError esperado) {
+                                    ReferendumError attendu) {
         try {
             new ReferendumService(c).creer(token, q, o1, o0, duree);
-            verificar(nombre + " (devait lancer une exception)", false);
+            verifier(nom + " (devait lancer une exception)", false);
         } catch (ReferendumException e) {
-            verificar(nombre + " -> " + e.getError(), e.getError() == esperado);
+            verifier(nom + " -> " + e.getError(), e.getError() == attendu);
         }
     }
 
     // Comme probarError, mais vérifie aussi que send() n'a JAMAIS été appelé.
     // On donne une réponse « succès » : si la validation locale manquait,
     // l'appel réussirait et le test passerait en [KO].
-    private static void probarErrorSansReseau(String nombre, String token, String q,
+    private static void testerErrorSansReseau(String nom, String token, String q,
                                               String o1, String o0, int duree,
-                                              ReferendumError esperado) {
+                                              ReferendumError attendu) {
         Message created = new Message(MessageType.REFERENDUM_CREATED);
         created.add("id", "42");
         fakeConnection c = new fakeConnection(created);
-        probarError(nombre, c, token, q, o1, o0, duree, esperado);
-        verificar(nombre + " : réseau non utilisé", !c.sendCalled);
+        testerError(nom, c, token, q, o1, o0, duree, attendu);
+        verifier(nom + " : réseau non utilisé", !c.sendCalled);
     }
 
-    private static void verificar(String nombre, boolean condicion) {
-        if (condicion) { ok++; System.out.println("[OK] " + nombre); }
-        else           { ko++; System.out.println("[KO] " + nombre); }
+    private static void verifier(String nom, boolean condition) {
+        if (condition) { ok++; System.out.println("[OK] " + nom); }
+        else           { ko++; System.out.println("[KO] " + nom); }
     }
 }
