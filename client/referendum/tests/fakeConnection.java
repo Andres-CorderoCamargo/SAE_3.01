@@ -24,7 +24,10 @@ public class fakeConnection implements Connection {
     @Override
     public void send(Message m) throws IOException {
         sendCalled = true;
-        if (failOnSend) throw new IOException("Réseau coupé (simulé)");
+        lastSent = m;
+        if (failOnSend) {
+            throw new IOException("Réseau coupé (simulé)");
+        }
     }
 
     @Override
