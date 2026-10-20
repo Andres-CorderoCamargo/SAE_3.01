@@ -27,28 +27,59 @@ public class ReferendumService {
         if (token == null) { // Sans token donc l'utilisateur n'est pas connecté.
             throw new ReferendumException(ReferendumError.NON_CONNECTE);
         }
-        // Validation des champs (aussi sans réseau)
+        // Validation locale des champs (sans réseau)
         validerChamps(question, option1, option0, dureeMinutes);
 
-        // Quand tout est ok (les tests(?) d'avant), on passe à construire le message CREATE_REFERENDUM avec tous ses champs
+        // Construction du message, puis échange complet avec l'urne
+        Message m = construireMessage(MessageType.CREATE_REFERENDUM, token,
+                question, option1, option0, dureeMinutes);
+        return echanger(m, MessageType.REFERENDUM_CREATED).get("id");
+    }
+
+    public void modifier(String token, String id, String question, String option1,
+                         String option0, int dureeMinutes) throws ReferendumException {
+        // Pas de réseau
+        if (token == null) {
+            throw new ReferendumException(ReferendumError.NON_CONNECTE);
+        }
+        // L'identifiant du référendum à modifier est obligatoire (sinon, ça n'a pas de sens).
+        if (id == null || id.isBlank()) {
+            throw new ReferendumException(ReferendumError.CHAMPS_INVALIDES);
+        }
+        // Mêmes règles de validation que pour la création
+        validerChamps(question, option1, option0, dureeMinutes);
+
+        Message m = construireMessage(MessageType.MODIFY_REFERENDUM, token,
+                question, option1, option0, dureeMinutes);
+        m.add("id", id);
+
+        // On attend REFERENDUM_MODIFIED ; la réponse n'a pas de contenu utile
+        echanger(m, MessageType.REFERENDUM_MODIFIED);
+    }
+
+    private Message construireMessage(MessageType type, String token, String question,
+                                      String option1, String option0, int dureeMinutes) {
+        Message m = new Message(type);
+        m.add("token", token);
+        m.add("question", question.trim());
+        m.add("option1", option1.trim());
+        m.add("option0", option0.trim());
+        m.add("duree", String.valueOf(dureeMinutes));
+        return m;
+    }
+
+    private Message echanger(Message m, MessageType succes) throws ReferendumException {
         try {
-            Message m = new Message(MessageType.CREATE_REFERENDUM);
-            m.add("token", token);
-            m.add("question", question.trim());
-            m.add("option1", option1.trim());
-            m.add("option0", option0.trim());
-            m.add("duree", String.valueOf(dureeMinutes));
             connection.send(m);
 
-            // On attend la réponse de l'urne
             Message r = connection.receive(timeoutMs);
             if (r == null) {
                 throw new ReferendumException(ReferendumError.TIMEOUT);
             }
-            // Le système analyse le message reçu (fonction plus en bas)
-            return interpreter(r);
+            return interpreter(r, succes);
 
-        } catch (IOException e) { // Pour eviter problèmes et annoncer la raison.
+        } catch (IOException e) {
+            // Panne réseau : on la transforme en erreur métier en gardant la cause
             throw new ReferendumException(ReferendumError.ERREUR_RESEAU, e);
         }
     }
@@ -73,29 +104,36 @@ public class ReferendumService {
         }
     }
 
-    private String interpreter(Message r) throws ReferendumException {
-        switch (r.getType()) {
-            // l'urne renvoie l'identifiant du référendum créé
-            case REFERENDUM_CREATED:
-                return r.get("id");
-            // Sinon... paw !
-            case ERROR:
-                String code = r.get("code");
-                if ("INVALID_TOKEN".equals(code)) {
-                    throw new ReferendumException(ReferendumError.NON_CONNECTE);
-                }
-                if ("NOT_AUTHORIZED".equals(code)) {
-                    throw new ReferendumException(ReferendumError.NON_AUTORISE);
-                }
-                if ("ELECTION_ALREADY_RUNNING".equals(code)) {
-                    throw new ReferendumException(ReferendumError.REFERENDUM_DEJA_EN_COURS);
-                }
-                if ("BAD_FORMAT".equals(code)) {
-                    throw new ReferendumException(ReferendumError.CHAMPS_INVALIDES);
-                }
-                throw new ReferendumException(ReferendumError.ERREUR_SERVEUR);
-            default: // Celui-là c'est si jamais on ne sais pas ce qui se passe :b
-                throw new ReferendumException(ReferendumError.REPONSE_INATTENDUE);
+    private Message interpreter(Message r, MessageType succes) throws ReferendumException {
+        if (r.getType() == succes) {
+            return r;
         }
+        // Ni succès ni ERROR (par exemple un LOGIN_OK) : réponse hors protocole
+        if (r.getType() != MessageType.ERROR) {
+            throw new ReferendumException(ReferendumError.REPONSE_INATTENDUE);
+        }
+        String code = r.get("code");
+        if ("INVALID_TOKEN".equals(code)) {
+            throw new ReferendumException(ReferendumError.NON_CONNECTE);
+        }
+        if ("NOT_AUTHORIZED".equals(code)) {
+            throw new ReferendumException(ReferendumError.NON_AUTORISE);
+        }
+        if ("ELECTION_ALREADY_RUNNING".equals(code)) {
+            throw new ReferendumException(ReferendumError.REFERENDUM_DEJA_EN_COURS);
+        }
+        if ("REFERENDUM_NOT_FOUND".equals(code)) {
+            throw new ReferendumException(ReferendumError.REFERENDUM_INTROUVABLE);
+        }
+        if ("VOTES_ALREADY_RECEIVED".equals(code)) {
+            throw new ReferendumException(ReferendumError.VOTES_DEJA_RECUS);
+        }
+        if ("ELECTION_CLOSED".equals(code)) {
+            throw new ReferendumException(ReferendumError.REFERENDUM_TERMINE);
+        }
+        if ("BAD_FORMAT".equals(code)) {
+            throw new ReferendumException(ReferendumError.CHAMPS_INVALIDES);
+        }
+        throw new ReferendumException(ReferendumError.ERREUR_SERVEUR);
     }
 }
