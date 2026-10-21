@@ -19,6 +19,20 @@
             <artifactId>proto-shared</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
+        <!-- Pilote JDBC pour se connecter a la base Oracle de l'IUT -->
+        <dependency>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <version>23.26.0.0.0</version>
+        </dependency>
+
+        <!-- BCrypt : hachage et verification des mots de passe -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
     </dependencies>
 
 </project>
