@@ -16,4 +16,29 @@
         <module>app-scrutateur</module>
         <module>app-systeme</module>
     </modules>
+<properties>
+        <!-- Les sources et les tests contiennent des accents -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- JUnit 5 pour les tests unitaires de tous les modules (mvn test) -->
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Les anciennes versions de Surefire ne lancent pas les tests JUnit 5 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>
