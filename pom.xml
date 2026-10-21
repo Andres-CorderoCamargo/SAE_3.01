@@ -11,6 +11,7 @@
 
     <modules>
         <module>proto-shared</module>
+        <module>app-client</module>
         <module>app-electeur</module>
         <module>app-scrutateur</module>
         <module>app-systeme</module>
