@@ -1,7 +1,5 @@
 package systeme.persistance;
 
-import org.mindrot.jbcrypt.BCrypt;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,10 +10,9 @@ import java.sql.Types;
 /**
  * Comptes et connexion.
  *
- * Le mot de passe est hache ICI, dans le serveur, jamais dans le client.
- * BCrypt ajoute un sel different a chaque fois, donc deux hachages du
- * meme mot de passe ne se ressemblent pas. On ne compare donc jamais
- * deux empreintes avec equals : on utilise BCrypt.checkpw.
+ * Le mot de passe est hache dans le serveur, jamais dans le client.
+ * Le hachage et la verification passent par la classe MotDePasse, qui est
+ * la seule a connaitre BCrypt.
  */
 public class AuthentificationDAO {
 
@@ -66,10 +63,12 @@ public class AuthentificationDAO {
             // 2. On verifie le mot de passe
             boolean mdpBon = false;
             if (empreinte != null) {
-                mdpBon = BCrypt.checkpw(motDePasse, empreinte);
+                mdpBon = MotDePasse.verifier(motDePasse, empreinte);
             }
 
             // 3. Compte inconnu, desactive ou mauvais mot de passe :
+            //    meme reponse dans les trois cas, pour ne pas dire
+            //    a un curieux quels identifiants existent.
             if (idUtilisateur == null || actif == 0 || !mdpBon) {
                 resultat.message = appelerEchecConnexion(cx, identifiant);
                 return resultat;
@@ -109,7 +108,7 @@ public class AuthentificationDAO {
             return "Identifiant electeur invalide : 5 caracteres maximum";
         }
 
-        String empreinte = BCrypt.hashpw(motDePasse, BCrypt.gensalt(12));
+        String empreinte = MotDePasse.hacher(motDePasse);
 
         Connection cx = BaseDeDonnees.ouvrir();
         try {
