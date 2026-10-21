@@ -1,11 +1,6 @@
 -- =====================================================================
 -- SAE 3.01 - Vote electronique - Sprint 1
--- Fichier 3 sur 4 : donnees d'essai.
--- A executer APRES 01_creation_tables.sql et 02_procedures.sql
--- =====================================================================
--- ATTENTION : ces comptes servent uniquement aux essais. Ne JAMAIS
--- executer ce fichier sur une vraie installation : il creerait cinq
--- faux comptes, dont un organisateur, avec un mot de passe bidon.
+-- Fichier 3 sur 4 : donnees d'essai du sprint 1.
 INSERT INTO Utilisateurs
  (idUtilisateur, identifiantUtilisateur, mdpHashUtilisateur, roleUtilisateur, doitChangerMdp)
 VALUES ('U1', 'gasquet', 'hash_a_remplacer', 'ORGANISATEUR', 0);
@@ -52,16 +47,9 @@ INSERT INTO Inscriptions (idReferendum, idUtilisateur) VALUES ('R1', 'U3');
 INSERT INTO Inscriptions (idReferendum, idUtilisateur) VALUES ('R1', 'U4');
 INSERT INTO Inscriptions (idReferendum, idUtilisateur) VALUES ('R1', 'U5');
 
--- Cle publique d'exemple (petits nombres, uniquement pour les essais).
--- En vrai, ces valeurs viennent de KeyGen cote scrutateur en Java.
-INSERT INTO UrnesChiffrees
- (idReferendum, idScrutateur, clePubliqueP, clePubliqueG, clePubliqueH)
-VALUES ('R1', 'U2', '23', '2', '8');
-
 COMMIT;
 
 
--- Verification rapide
 SELECT idUtilisateur, identifiantUtilisateur, roleUtilisateur FROM Utilisateurs;
 SELECT idReferendum, titreReferendum, statutReferendum FROM Referendums;
 SELECT * FROM Inscriptions;

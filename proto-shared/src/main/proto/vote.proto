@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package vote;
+
+option java_package = "com.g3.vote.proto";
+option java_multiple_files = true;
+
+
+message PublicKeyRequest {}
+
+message PublicKeyResponse {
+  string public_key = 1;
+}
+
+
+message VoteRequest {
+  string electeur_id = 1;
+  bytes vote_chiffre = 2;
+}
+
+message VoteResponse {
+  bool success = 1;
+  string message = 2;
+  bool is_late = 3;
+}
+
+
+message ResultRequest {}
+
+message ResultResponse {
+  bool election_terminee = 1;
+  string resultat = 2;
+  string message = 3;
+}
+
+
+// Un seul chiffre : l'agregat de tous les bulletins, jamais les bulletins un par un.
+message AggregatedResultToScrutateur {
+  bytes agregat_u = 1;
+  bytes agregat_v = 2;
+  int32 nombre_bulletins = 3; // borne B pour la recherche exhaustive de m
+}
+
+message DecryptedResultFromScrutateur {
+  bool success = 1;
+  int32 nombre_de_oui = 2;
+  string message = 3;
+}
+
+
+message RegisterRequest {
+  string electeur_id = 1;
+  string login = 2;
+  bytes password_chiffre = 3;
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+
+message ClientMessage {
+  oneof payload {
+    PublicKeyRequest public_key_request = 1;
+    RegisterRequest register_request = 2;
+    VoteRequest vote_request = 3;
+    ResultRequest result_request = 4;
+  }
+}

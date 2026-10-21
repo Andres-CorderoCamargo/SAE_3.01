@@ -13,4 +13,9 @@ Le système permet notamment de :
 - Calculer et publier les résultats.
 - Garantir la confidentialité et l'intégrité des votes.
 
-# SAE_3.01
+## Démarrage du sprint 1
+
+- [Schéma et règles de la base de données](bdd/README.md)
+- [Arborescence Java proposée et revue des diagrammes de séquence système](docs/architecture/arborescence-et-dss.md)
+
+Le dépôt contient encore une maquette HTML de connexion. Le cœur demandé par le sujet reste constitué de trois programmes Java : client électeur, urne serveur et scrutateur.
