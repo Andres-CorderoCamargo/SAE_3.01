@@ -1,5 +1,6 @@
 package client.referendum;
 
+import client.commun.*;
 import java.io.IOException;
 
 public class ReferendumService {

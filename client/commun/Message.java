@@ -1,4 +1,4 @@
-package client.auth.java;
+package client.commun;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,15 +18,15 @@ public class Message {
         } else {
             String s = new String(value);
             fields.put(key, s);
-            // On peut effacer le tableau temporaire si nécessaire, 
+            // On peut effacer le tableau temporaire si nécessaire,
             // mais l'appelant s'en charge souvent via finally.
         }
     }
     public String get(String key) {
-        return fields.get(key); 
+        return fields.get(key);
     }
 
     public MessageType getType() {
-        return type; 
+        return type;
     }
 }

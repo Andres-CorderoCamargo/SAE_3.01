@@ -62,19 +62,4 @@ public class ElecteurService {
         String mdpHache = BCrypt.hashpw(mdp, BCrypt.gensalt(12));
         return mdpHache.getBytes();
     }
-      /**
-     * Vérifie si un mot de passe saisi correspond au haché enregistré.
-     */
-    public static boolean checkPassword(String passwordSaisi, String hashEnBDD) {
-        // passwordSaisi == null : jbcrypt le transformerait en texte "null"
-        if (passwordSaisi == null || hashEnBDD == null || !hashEnBDD.startsWith("$2a$")) {
-            return false;
-        }
-        try {
-            return BCrypt.checkpw(passwordSaisi, hashEnBDD);
-        } catch (IllegalArgumentException | IndexOutOfBoundsException e) {
-            // empreinte $2a$ tronquée ou corrompue : on refuse au lieu de planter
-            return false;
-        }
-    }
 }

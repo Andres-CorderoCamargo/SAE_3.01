@@ -1,4 +1,4 @@
-package client.referendum;
+package client.commun;
 
 public enum MessageType {
     LOGIN,  // Connection avec l'urne (?)

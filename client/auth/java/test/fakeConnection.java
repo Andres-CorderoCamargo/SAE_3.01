@@ -1,7 +1,7 @@
 package client.auth.java.test;
 
-import client.auth.java.Connection;
-import client.auth.java.Message;
+import client.commun.Connection;
+import client.commun.Message;
 
 import java.io.IOException;
 

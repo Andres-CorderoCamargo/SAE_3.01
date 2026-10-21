@@ -1,5 +1,6 @@
 package client.auth.java;
 
+import client.commun.*;
 import java.io.IOException;
 import java.util.Arrays;
 

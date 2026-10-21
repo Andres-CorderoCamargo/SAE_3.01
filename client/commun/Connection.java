@@ -1,4 +1,4 @@
-package client.referendum;
+package client.commun;
 
 import java.io.IOException;
 

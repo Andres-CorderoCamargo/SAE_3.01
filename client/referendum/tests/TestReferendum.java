@@ -1,6 +1,7 @@
 package client.referendum.tests;
 
 import client.referendum.*;
+import client.commun.*;
 
 public class TestReferendum {
 

@@ -1,6 +1,7 @@
 package client.auth.java.test;
 
 import client.auth.java.*;
+import client.commun.*;
 
 public class testAuthentification {
 

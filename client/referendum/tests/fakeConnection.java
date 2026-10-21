@@ -1,7 +1,7 @@
 package client.referendum.tests;
 
-import client.referendum.Connection;
-import client.referendum.Message;
+import client.commun.Connection;
+import client.commun.Message;
 
 import java.io.IOException;
 
