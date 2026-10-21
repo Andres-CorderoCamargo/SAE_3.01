@@ -22,6 +22,11 @@ public class MotDePasse {
      * passe donnent deux empreintes differentes. C'est normal.
      */
     public static String hacher(String mdpClair) {
+        // BCrypt hacherait le texte "null" sans rien dire, et le compte
+        // s'ouvrirait avec "null" comme mot de passe (trouve par Zakaria).
+        if (mdpClair == null || mdpClair.isEmpty()) {
+            throw new IllegalArgumentException("Mot de passe vide");
+        }
         return BCrypt.hashpw(mdpClair, BCrypt.gensalt(12));
     }
 

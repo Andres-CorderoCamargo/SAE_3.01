@@ -50,7 +50,6 @@ class AjouterElecteurDAOTest {
     }
 
     @Test
-    @Disabled("BUG : un mot de passe provisoire null n'est pas refusé, MotDePasse.hacher(null) hache le texte \"null\"")
     @DisplayName("mot de passe provisoire null refusé sans aller en base")
     void mdpNull() {
         String message = ajouter("E0001", null);
@@ -58,7 +57,6 @@ class AjouterElecteurDAOTest {
     }
 
     @Test
-    @Disabled("BUG : un mot de passe provisoire vide n'est pas refusé")
     @DisplayName("mot de passe provisoire vide refusé sans aller en base")
     void mdpVide() {
         String message = ajouter("E0001", "");

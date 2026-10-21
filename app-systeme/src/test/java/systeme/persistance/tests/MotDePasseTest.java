@@ -78,14 +78,12 @@ class MotDePasseTest {
         }
 
         @Test
-        @Disabled("BUG : hacher(null) hache le texte \"null\", un compte sans mot de passe s'ouvre alors avec \"null\"")
         @DisplayName("refuse un mot de passe null")
         void refuseNull() {
             assertThrows(IllegalArgumentException.class, () -> MotDePasse.hacher(null));
         }
 
         @Test
-        @Disabled("BUG : hacher(\"\") accepte un mot de passe vide")
         @DisplayName("refuse un mot de passe vide")
         void refuseVide() {
             assertThrows(IllegalArgumentException.class, () -> MotDePasse.hacher(""));

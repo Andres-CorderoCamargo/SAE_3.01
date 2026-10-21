@@ -108,6 +108,12 @@ public class AuthentificationDAO {
             return "Identifiant electeur invalide : 5 caracteres maximum";
         }
 
+        // Sans ce controle, BCrypt hacherait le texte "null" et le compte
+        // serait creable avec null comme mot de passe (trouve par Zakaria).
+        if (motDePasse == null || motDePasse.isEmpty()) {
+            return "Mot de passe provisoire obligatoire";
+        }
+
         String empreinte = MotDePasse.hacher(motDePasse);
 
         Connection cx = BaseDeDonnees.ouvrir();
