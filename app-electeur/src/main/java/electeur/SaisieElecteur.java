@@ -30,6 +30,7 @@ public class SaisieElecteur {
         System.out.println("1. Inscrire un compte électeur");
         System.out.println("2. Se connecter");
         System.out.println("3. Voter (à venir)");
+        System.out.println("4. Supprimer un électeur (organisateur)"); // TODO: réserver à l'organisateur
         System.out.println("0. Quitter");
         System.out.print("Faites votre choix : ");
 
@@ -54,6 +55,12 @@ public class SaisieElecteur {
         String mdpClair = scanner.nextLine();
 
         return new InfosInscription(electeurId, login, mdpClair);
+    }
+
+    public static String demanderIdSuppression() {
+        System.out.println("\n--- SUPPRESSION D'UN ÉLECTEUR ---");
+        System.out.print("Entrez l'identifiant de l'électeur à supprimer : ");
+        return scanner.nextLine().trim();
     }
 
 

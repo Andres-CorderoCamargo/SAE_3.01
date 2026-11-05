@@ -137,6 +137,39 @@ public class AuthentificationDAO {
         }
     }
 
+
+    /**
+     * Supprime un electeur. Seul l'organisateur doit pouvoir appeler cette
+     * methode : c'est a l'appelant d'avoir verifie le role.
+     *
+     * Si l'electeur a deja vote, la procedure ne le supprime pas : elle
+     * desactive son compte (pour garder la trace "un electeur, une voix").
+     *
+     * @param idUtilisateur  identifiant de l'electeur (5 caracteres maximum)
+     * @return "OK", ou le message qui explique le refus ou la desactivation
+     */
+    public static String supprimerElecteur(String idUtilisateur) throws SQLException {
+
+        if (idUtilisateur == null || idUtilisateur.trim().isEmpty() || idUtilisateur.length() > 5) {
+            return "Identifiant electeur invalide : 5 caracteres maximum";
+        }
+
+        Connection cx = BaseDeDonnees.ouvrir();
+        try {
+            CallableStatement proc = cx.prepareCall("{ call supprimerElecteur(?, ?) }");
+            proc.setString(1, idUtilisateur);
+            proc.registerOutParameter(2, Types.VARCHAR);
+            proc.execute();
+
+            String message = proc.getString(2);
+            proc.close();
+            return message;
+
+        } finally {
+            cx.close();
+        }
+    }
+
     private static String appelerSuccesConnexion(Connection cx, String identifiant)
             throws SQLException {
         CallableStatement proc = cx.prepareCall("{ call succesConnexion(?, ?) }");

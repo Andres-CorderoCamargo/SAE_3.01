@@ -66,5 +66,16 @@ message ClientMessage {
     RegisterRequest register_request = 2;
     VoteRequest vote_request = 3;
     ResultRequest result_request = 4;
+    DeleteElecteurRequest delete_electeur_request = 5;
   }
+}
+
+
+message DeleteElecteurRequest {
+  string electeur_id = 1;
+}
+
+message DeleteElecteurResponse {
+  bool success = 1;
+  string message = 2;
 }

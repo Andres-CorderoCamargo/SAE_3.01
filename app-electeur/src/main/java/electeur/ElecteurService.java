@@ -1,7 +1,5 @@
 package electeur;
-import com.g3.vote.proto.ClientMessage;
-import com.g3.vote.proto.RegisterRequest;
-import com.g3.vote.proto.RegisterResponse;
+import com.g3.vote.proto.*;
 import com.google.protobuf.ByteString;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -53,6 +51,30 @@ public class ElecteurService {
             System.err.println("Erreur réseau/flux : " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public static String supprimerElecteur(Socket socket, String electeurId) {
+        try {
+            DeleteElecteurRequest request = DeleteElecteurRequest.newBuilder()
+                    .setElecteurId(electeurId)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setDeleteElecteurRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            DeleteElecteurResponse response =
+                    DeleteElecteurResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
         }
     }
 

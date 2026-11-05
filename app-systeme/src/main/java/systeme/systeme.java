@@ -1,10 +1,12 @@
 package systeme;
 
 import com.g3.vote.proto.*;
+import systeme.persistance.AuthentificationDAO;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class systeme {
@@ -60,6 +62,9 @@ public class systeme {
 
                     } else if (clientMsg.hasPublicKeyRequest()) {
                         traiterPublicKey(clientMsg.getPublicKeyRequest(), s);
+
+                    } else if (clientMsg.hasDeleteElecteurRequest()) {
+                        traiterSuppression(clientMsg.getDeleteElecteurRequest(), s);
 
                     } else {
                         System.out.println("[SERVEUR] Type de message inconnu ou non géré.");
@@ -129,5 +134,30 @@ public class systeme {
         System.out.println("[SERveur] Demande de clé publique reçue.");
 
         // TODO: Envoyer la PublicKeyResponse
+    }
+
+    private static void traiterSuppression(DeleteElecteurRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Suppression demandée pour : " + request.getElecteurId());
+
+        boolean success;
+        String message;
+
+        try {
+            // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
+            message = AuthentificationDAO.supprimerElecteur(request.getElecteurId());
+            success = message.equals("OK");
+        } catch (SQLException e) {
+            success = false;
+            message = "Erreur base de données";
+            System.err.println("[SERVEUR] " + e.getMessage());
+        }
+
+        DeleteElecteurResponse response = DeleteElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
     }
 }

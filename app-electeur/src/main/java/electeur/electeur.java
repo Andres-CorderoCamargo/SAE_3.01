@@ -46,6 +46,12 @@ public class electeur {
                         System.out.println("[INFO] La fonctionnalité de vote est à implémenter dans ElecteurService.");
                         break;
 
+                    case 4:
+                        String idASupprimer = SaisieElecteur.demanderIdSuppression();
+                        String resultat = ElecteurService.supprimerElecteur(socket, idASupprimer);
+                        System.out.println("[CLIENT] " + resultat);
+                        break;
+
                     case 0:
                         System.out.println("Fermeture de la session électeur. Au revoir !");
                         continuer = false;
