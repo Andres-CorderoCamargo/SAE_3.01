@@ -51,7 +51,10 @@ message DecryptedResultFromScrutateur {
 message RegisterRequest {
   string electeur_id = 1;
   string login = 2;
+  //pas chiffree a ce moment
   bytes password_chiffre = 3;
+  string nom = 4 ;
+  string prenom = 5;
 }
 
 message RegisterResponse {

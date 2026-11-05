@@ -82,43 +82,47 @@ public class systeme {
     private static void traiterInscription(RegisterRequest request, Socket socket) throws IOException {
         System.out.println("[SERVEUR] Traitement inscription pour : " + request.getLogin());
 
-        String electeurId = request.getElecteurId();
-        String login = request.getLogin();
-
-        String mdpChiffreStr = request.getPasswordChiffre().toStringUtf8();
+        String electeurId = request.getElecteurId().trim();
+        String login = request.getLogin().trim();
+        String mdpClair = recupererMotDePasse(request.getPasswordChiffre());
+        String nom = request.getNom().trim();
+        String prenom = request.getPrenom().trim();
 
         boolean success;
         String message;
 
         // Vérifications de base
-        if (electeurId == null || electeurId.isEmpty() || login == null || login.isEmpty()) {
+        if (electeurId.isEmpty() || login.isEmpty() || mdpClair.isEmpty()
+                || nom.isEmpty() || prenom.isEmpty()) {
             success = false;
-            message = "Échec : L'identifiant et le login ne peuvent pas être vides.";
-        }
-        // Vérification si l'électeur existe déjà
-        else if (baseElecteursTemporaire.containsKey(electeurId)) {
-            success = false;
-            message = "Échec : L'électeur avec l'ID " + electeurId + " est déjà inscrit.";
-        }
-        else {
-            // 3. Enregistrement temporaire en mémoire
-            InfosStockageElecteur infos = new InfosStockageElecteur(electeurId, login, mdpChiffreStr);
-            baseElecteursTemporaire.put(electeurId, infos);
+            message = "Échec : tous les champs sont obligatoires.";
+        } else {
+            try {
+                // Écriture en base : le DAO hache le mot de passe puis appelle la procédure
+                message = AuthentificationDAO.ajouterElecteur(electeurId, login, mdpClair, nom, prenom);
+                success = message.equals("OK");
 
-            success = true;
-            message = "Inscription réussie. Contenu de la base : " + baseElecteursTemporaire.toString();
-
-            System.out.println("[SERVEUR - MÉMOIRE] Électeur ajouté. Total inscrits : " + baseElecteursTemporaire.size());
+                if (success) {
+                    // Debug uniquement : copie en mémoire, sans mot de passe ni hash
+                    baseElecteursTemporaire.put(electeurId,
+                            new InfosStockageElecteur(electeurId, login, "(en base)"));
+                    System.out.println("[SERVEUR - DEBUG] Électeurs en mémoire : "
+                            + baseElecteursTemporaire.size());
+                    message = "Inscription réussie.";
+                }
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
         }
 
         System.out.println("[SERVEUR] Message renvoyé : " + message);
 
-        // Construction et envoi de la réponse
         RegisterResponse response = RegisterResponse.newBuilder()
                 .setSuccess(success)
                 .setMessage(message)
                 .build();
-
 
         response.writeDelimitedTo(socket.getOutputStream());
         socket.getOutputStream().flush();
@@ -159,5 +163,9 @@ public class systeme {
 
         response.writeDelimitedTo(socket.getOutputStream());
         socket.getOutputStream().flush();
+    }
+
+    private static String recupererMotDePasse(com.google.protobuf.ByteString octets) {
+        return octets.toStringUtf8();
     }
 }

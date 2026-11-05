@@ -17,16 +17,18 @@ public class ElecteurService {
      * @param mdpClair   Le mot de passe en clair (qui sera chiffré)
      * @return true si l'inscription a réussi, false sinon
      */
-    public static boolean inscrireElecteur(Socket socket, String electeurId, String login, String mdpClair) {
+    public static boolean inscrireElecteur(Socket socket, String electeurId, String login, String mdpClair,String nom,String prenom) {
         try {
-            // Chiffrement du mot de passe
-            byte[] mdpChiffre = chiffrerMotDePasse(mdpClair);
+
+            byte[] mdpOctets  = preparerMotDePasse(mdpClair);
 
 
             RegisterRequest registerRequest = RegisterRequest.newBuilder()
                     .setElecteurId(electeurId)
                     .setLogin(login)
-                    .setPasswordChiffre(ByteString.copyFrom(mdpChiffre))
+                    .setPasswordChiffre(ByteString.copyFrom(mdpOctets))
+                    .setNom(nom)
+                    .setPrenom(prenom)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -83,5 +85,9 @@ public class ElecteurService {
 
         String mdpHache = BCrypt.hashpw(mdp, BCrypt.gensalt(12));
         return mdpHache.getBytes();
+    }
+
+    private static byte[] preparerMotDePasse(String mdpClair) {
+        return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 }
