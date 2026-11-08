@@ -66,6 +66,10 @@ public class systeme {
                     } else if (clientMsg.hasDeleteElecteurRequest()) {
                         traiterSuppression(clientMsg.getDeleteElecteurRequest(), s);
 
+                    } else if (clientMsg.hasUpdateElecteurRequest()) {
+                        traiterModification(clientMsg.getUpdateElecteurRequest(), s);
+
+
                     } else {
                         System.out.println("[SERVEUR] Type de message inconnu ou non géré.");
                     }
@@ -142,13 +146,13 @@ public class systeme {
 
     private static void traiterSuppression(DeleteElecteurRequest request, Socket socket) throws IOException {
         System.out.println("[SERVEUR] Suppression demandée pour : " + request.getElecteurId());
-
+        String electeurId = request.getElecteurId().trim();
         boolean success;
         String message;
 
         try {
             // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
-            message = AuthentificationDAO.supprimerElecteur(request.getElecteurId());
+            message = AuthentificationDAO.supprimerElecteur(electeurId);
             success = message.equals("OK");
         } catch (SQLException e) {
             success = false;
@@ -167,5 +171,47 @@ public class systeme {
 
     private static String recupererMotDePasse(com.google.protobuf.ByteString octets) {
         return octets.toStringUtf8();
+    }
+
+
+
+    private static void traiterModification(UpdateElecteurRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Modification demandée pour : " + request.getElecteurId());
+
+        String electeurId = request.getElecteurId().trim();
+        String login = request.getLogin().trim();
+        String nom = request.getNom().trim();
+        String prenom = request.getPrenom().trim();
+
+        boolean success;
+        String message;
+
+        if (electeurId.isEmpty() || login.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
+            success = false;
+            message = "Échec : tous les champs sont obligatoires.";
+        } else {
+            try {
+                // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
+                message = AuthentificationDAO.modifierElecteur(electeurId, login, nom, prenom);
+                success = message.equals("OK");
+
+                if (success && baseElecteursTemporaire.containsKey(electeurId)) {
+                    baseElecteursTemporaire.put(electeurId,
+                            new InfosStockageElecteur(electeurId, login, "(en base)"));
+                }
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        UpdateElecteurResponse response = UpdateElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
     }
 }

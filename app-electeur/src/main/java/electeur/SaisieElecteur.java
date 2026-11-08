@@ -10,16 +10,24 @@ public class SaisieElecteur {
      private final String electeurId;
      private final String login;
      private final String mdpClair;
+     private final String nom;
+     private final String prenom;
 
-     public InfosInscription(String electeurId, String login, String mdpClair) {
-        this.electeurId = electeurId;
-        this.login = login;
-        this.mdpClair = mdpClair;
-    }
+
+     public InfosInscription(String electeurId, String login, String mdpClair,
+                             String nom, String prenom) {
+         this.electeurId = electeurId;
+         this.login = login;
+         this.mdpClair = mdpClair;
+         this.nom = nom;
+         this.prenom = prenom;
+     }
 
     public String getElecteurId() { return electeurId; }
     public String getLogin() { return login; }
     public String getMdpClair() { return mdpClair; }
+     public String getNom() { return nom; }
+     public String getPrenom() { return prenom; }
 }
 
     public static int afficherMenuEtChoisir() {
@@ -31,6 +39,7 @@ public class SaisieElecteur {
         System.out.println("2. Se connecter");
         System.out.println("3. Voter (à venir)");
         System.out.println("4. Supprimer un électeur (organisateur)"); // TODO: réserver à l'organisateur
+        System.out.println("5. Modifier un électeur (organisateur)");  // TODO: réserver à l'organisateur
         System.out.println("0. Quitter");
         System.out.print("Faites votre choix : ");
 
@@ -54,13 +63,58 @@ public class SaisieElecteur {
         System.out.print("Entrez le mot de passe : ");
         String mdpClair = scanner.nextLine();
 
-        return new InfosInscription(electeurId, login, mdpClair);
+        System.out.print("Entrez le nom : ");
+        String nom = scanner.nextLine().trim();
+
+        System.out.print("Entrez le prénom : ");
+        String prenom = scanner.nextLine().trim();
+
+        return new InfosInscription(electeurId, login, mdpClair, nom, prenom);
     }
 
     public static String demanderIdSuppression() {
         System.out.println("\n--- SUPPRESSION D'UN ÉLECTEUR ---");
         System.out.print("Entrez l'identifiant de l'électeur à supprimer : ");
         return scanner.nextLine().trim();
+    }
+
+
+
+    public static class InfosModification {
+        private final String electeurId;
+        private final String login;
+        private final String nom;
+        private final String prenom;
+
+        public InfosModification(String electeurId, String login, String nom, String prenom) {
+            this.electeurId = electeurId;
+            this.login = login;
+            this.nom = nom;
+            this.prenom = prenom;
+        }
+
+        public String getElecteurId() { return electeurId; }
+        public String getLogin() { return login; }
+        public String getNom() { return nom; }
+        public String getPrenom() { return prenom; }
+    }
+
+    public static InfosModification demanderInformationsModification() {
+        System.out.println("\n--- MODIFICATION D'UN ÉLECTEUR ---");
+
+        System.out.print("Identifiant de l'électeur à modifier : ");
+        String electeurId = scanner.nextLine().trim();
+
+        System.out.print("Nouveau login : ");
+        String login = scanner.nextLine().trim();
+
+        System.out.print("Nouveau nom : ");
+        String nom = scanner.nextLine().trim();
+
+        System.out.print("Nouveau prénom : ");
+        String prenom = scanner.nextLine().trim();
+
+        return new InfosModification(electeurId, login, nom, prenom);
     }
 
 

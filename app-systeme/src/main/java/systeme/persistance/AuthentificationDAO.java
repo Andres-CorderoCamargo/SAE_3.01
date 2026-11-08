@@ -191,4 +191,39 @@ public class AuthentificationDAO {
         proc.close();
         return message;
     }
+
+
+    public static String modifierElecteur(String idUtilisateur, String identifiant,
+                                          String nom, String prenom)
+            throws SQLException {
+
+        if (idUtilisateur == null || idUtilisateur.trim().isEmpty() || idUtilisateur.length() > 5) {
+            return "Identifiant electeur invalide : 5 caracteres maximum";
+        }
+        if (identifiant == null || identifiant.trim().isEmpty() || identifiant.length() > 25) {
+            return "Login invalide : 25 caracteres maximum";
+        }
+        if (nom == null || nom.trim().isEmpty() || nom.length() > 25
+                || prenom == null || prenom.trim().isEmpty() || prenom.length() > 25) {
+            return "Nom et prenom obligatoires : 25 caracteres maximum";
+        }
+
+        Connection cx = BaseDeDonnees.ouvrir();
+        try {
+            CallableStatement proc = cx.prepareCall("{ call modifierElecteur(?, ?, ?, ?, ?) }");
+            proc.setString(1, idUtilisateur);
+            proc.setString(2, identifiant);
+            proc.setString(3, nom);
+            proc.setString(4, prenom);
+            proc.registerOutParameter(5, Types.VARCHAR);
+            proc.execute();
+
+            String message = proc.getString(5);
+            proc.close();
+            return message;
+
+        } finally {
+            cx.close();
+        }
+    }
 }

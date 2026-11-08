@@ -70,6 +70,7 @@ message ClientMessage {
     VoteRequest vote_request = 3;
     ResultRequest result_request = 4;
     DeleteElecteurRequest delete_electeur_request = 5;
+    UpdateElecteurRequest update_electeur_request = 6;
   }
 }
 
@@ -79,6 +80,17 @@ message DeleteElecteurRequest {
 }
 
 message DeleteElecteurResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message UpdateElecteurRequest {
+  string electeur_id = 1;
+  string login = 2;
+  string nom = 3;
+  string prenom = 4;
+}
+message UpdateElecteurResponse {
   bool success = 1;
   string message = 2;
 }

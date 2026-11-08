@@ -1,7 +1,6 @@
 package electeur;
 import com.g3.vote.proto.*;
 import com.google.protobuf.ByteString;
-import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -14,7 +13,9 @@ public class ElecteurService {
      * @_socket         La socket connectée au serveur (l'urne)
      * @param electeurId L'identifiant unique de l'électeur
      * @param login      Le login choisi
-     * @param mdpClair   Le mot de passe en clair (qui sera chiffré)
+     * @param mdpClair   Le mot de passe en clair
+     * @param nom        le nom de l'électeur
+     * @param prenom     le prénom de l'électeur
      * @return true si l'inscription a réussi, false sinon
      */
     public static boolean inscrireElecteur(Socket socket, String electeurId, String login, String mdpClair,String nom,String prenom) {
@@ -80,12 +81,34 @@ public class ElecteurService {
         }
     }
 
+    public static String modifierElecteur(Socket socket, String electeurId, String login,
+                                          String nom, String prenom) {
+        try {
+            UpdateElecteurRequest request = UpdateElecteurRequest.newBuilder()
+                    .setElecteurId(electeurId)
+                    .setLogin(login)
+                    .setNom(nom)
+                    .setPrenom(prenom)
+                    .build();
 
-    private static byte[] chiffrerMotDePasse(String mdp) {
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setUpdateElecteurRequest(request)
+                    .build();
 
-        String mdpHache = BCrypt.hashpw(mdp, BCrypt.gensalt(12));
-        return mdpHache.getBytes();
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            UpdateElecteurResponse response =
+                    UpdateElecteurResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
     }
+
 
     private static byte[] preparerMotDePasse(String mdpClair) {
         return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);
