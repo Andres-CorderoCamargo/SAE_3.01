@@ -50,8 +50,14 @@ public class electeur {
 
                     case 4:
                         String idASupprimer = SaisieElecteur.demanderIdSuppression();
-                        String resultat = ElecteurService.supprimerElecteur(socket, idASupprimer);
-                        System.out.println("[CLIENT] " + resultat);
+                        if (idASupprimer.isEmpty()) {
+                            System.out.println("[CLIENT] Identifiant vide, suppression annulée.");
+                        } else if (SaisieElecteur.demanderConfirmationSuppression(idASupprimer)) {
+                            String resultat = ElecteurService.supprimerElecteur(socket, idASupprimer);
+                            System.out.println("[CLIENT] " + resultat);
+                        } else {
+                            System.out.println("[CLIENT] Suppression annulée.");
+                        }
                         break;
 
                     case 5:

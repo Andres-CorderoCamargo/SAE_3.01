@@ -117,6 +117,15 @@ public class SaisieElecteur {
         return new InfosModification(electeurId, login, nom, prenom);
     }
 
+    public static boolean demanderConfirmationSuppression(String electeurId) {
+        System.out.println("Vous allez supprimer l'électeur " + electeurId + ".");
+        System.out.println("(S'il a déjà voté, son compte sera seulement désactivé.)");
+        System.out.print("Confirmer ? (o/N) : ");
+
+        String reponse = scanner.nextLine().trim().toLowerCase();
+        return reponse.equals("o") || reponse.equals("oui");
+    }
+
 
 
 
