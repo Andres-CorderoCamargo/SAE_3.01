@@ -172,4 +172,10 @@ public class SaisieElecteur {
 
         return new InfosInscriptionReferendum(idReferendum, idElecteur);
     }
+        /** Saisie commune au lancement et a la cloture : un seul identifiant. */
+    public static String demanderIdReferendum(String titre) {
+        System.out.println("\n--- " + titre + " ---");
+        System.out.print("Identifiant du référendum : ");
+        return scanner.nextLine().trim();
+    }
 }
