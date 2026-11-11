@@ -308,3 +308,85 @@ EXCEPTION
 END;
 /
 SHOW ERRORS;
+
+-- =====================================================================
+-- VOTER
+-- =====================================================================
+-- Enregistre un bulletin chiffre. p_code vaut :
+-- OK, REFERENDUM_INCONNU, REFERENDUM_FERME, NON_INSCRIT, DEJA_VOTE
+
+CREATE OR REPLACE PROCEDURE enregistrerVote (
+    p_idReferendum IN Referendums.idReferendum%TYPE,
+    p_idElecteur   IN Inscriptions.idUtilisateur%TYPE,
+    p_bulletinU    IN BLOB,
+    p_bulletinV    IN BLOB,
+    p_code         OUT VARCHAR2
+) IS
+    v_nbRef      NUMBER;
+    v_statut     Referendums.statutReferendum%TYPE;
+    v_fermeture  Referendums.dateFermeture%TYPE;
+    v_nbInscrit  NUMBER;
+    v_dateVote   Inscriptions.dateVote%TYPE;
+BEGIN
+    -- Vérification si le référendum existe
+    SELECT COUNT(*) INTO v_nbRef
+    FROM Referendums
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_nbRef = 0 THEN
+            p_code := 'REFERENDUM_INCONNU';
+            RETURN;
+    END IF;
+
+    -- Vérifier s'il est ouvert
+    SELECT statutReferendum, dateFermeture INTO v_statut, v_fermeture
+    FROM Referendums
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_statut <> 'OUVERT' OR SYSDATE > v_fermeture THEN
+            p_code := 'REFERENDUM_FERME';
+            RETURN;
+    END IF;
+
+    -- Vérifier si l'électeur est inscrit
+    SELECT COUNT(*) INTO v_nbInscrit
+    FROM Inscriptions
+    WHERE idReferendum = p_idReferendum
+      AND idUtilisateur = p_idElecteur;
+
+    IF v_nbInscrit = 0 THEN
+            p_code := 'NON_INSCRIT';
+            RETURN;
+    END IF;
+
+    -- Pas de doublons
+    SELECT dateVote INTO v_dateVote
+    FROM Inscriptions
+    WHERE idReferendum = p_idReferendum
+      AND idUtilisateur = p_idElecteur;
+
+    IF v_dateVote IS NOT NULL THEN
+            p_code := 'DEJA_VOTE';
+            RETURN;
+    END IF;
+
+    -- Tout est bon !
+    INSERT INTO Bulletins (idBulletin, idReferendum, bulletinU, bulletinV)
+    VALUES (seqBulletin.NEXTVAL, p_idReferendum, p_bulletinU, p_bulletinV);
+
+    UPDATE Inscriptions
+    SET dateVote = SYSDATE
+    WHERE idReferendum = p_idReferendum
+      AND idUtilisateur = p_idElecteur;
+
+    COMMIT;
+    p_code := 'OK';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        p_code := 'ERREUR';
+END;
+/
+SHOW ERRORS;
+
