@@ -14,12 +14,26 @@ public class systeme {
 
     private static final ConcurrentHashMap<String, InfosStockageElecteur> baseElecteursTemporaire = new ConcurrentHashMap<>();
 
-    // Pour retenir qui est connecté : jeton -> utilisateur. et vide quand le serveur redémarre.
+    // Pour retenir qui est connecté : jeton -> utilisateur. Vidé quand le serveur redémarre.
     private static final ConcurrentHashMap<String, Connecte> sessions = new ConcurrentHashMap<>();
 
     public static class Connecte {
         public String idUtilisateur;
         public String role;
+    }
+
+    /** Message unique de refus : on ne dit pas si c'est le jeton ou le rôle qui ne va pas. */
+    private static final String REFUS = "Action réservée à l'organisateur. Connectez-vous d'abord.";
+
+    /**
+     * Dit si le jeton correspond a une session ouverte par un ORGANISATEUR.
+     */
+    private static boolean estOrganisateur(String jeton) {
+        if (jeton == null || jeton.isEmpty()) {
+            return false;
+        }
+        Connecte c = sessions.get(jeton);
+        return c != null && c.role.equals("ORGANISATEUR");
     }
 
     public static void main(String[] args) {
@@ -157,8 +171,12 @@ public class systeme {
         boolean success;
         String message;
 
-        // Vérifications de base
-        if (electeurId.isEmpty() || login.isEmpty() || mdpClair.isEmpty()
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Inscription refusée : pas organisateur");
+
+        } else if (electeurId.isEmpty() || login.isEmpty() || mdpClair.isEmpty()
                 || nom.isEmpty() || prenom.isEmpty()) {
             success = false;
             message = "Échec : tous les champs sont obligatoires.";
@@ -212,14 +230,20 @@ public class systeme {
         boolean success;
         String message;
 
-        try {
-            // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
-            message = AuthentificationDAO.supprimerElecteur(electeurId);
-            success = message.equals("OK");
-        } catch (SQLException e) {
+        if (!estOrganisateur(request.getJetonSession())) {
             success = false;
-            message = "Erreur base de données";
-            System.err.println("[SERVEUR] " + e.getMessage());
+            message = REFUS;
+            System.out.println("[SERVEUR] Suppression refusée : pas organisateur");
+
+        } else {
+            try {
+                message = AuthentificationDAO.supprimerElecteur(electeurId);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
         }
 
         DeleteElecteurResponse response = DeleteElecteurResponse.newBuilder()
@@ -246,12 +270,16 @@ public class systeme {
         boolean success;
         String message;
 
-        if (electeurId.isEmpty() || login.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Modification refusée : pas organisateur");
+
+        } else if (electeurId.isEmpty() || login.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
             success = false;
             message = "Échec : tous les champs sont obligatoires.";
         } else {
             try {
-                // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
                 message = AuthentificationDAO.modifierElecteur(electeurId, login, nom, prenom);
                 success = message.equals("OK");
 
