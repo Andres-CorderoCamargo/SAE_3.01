@@ -226,4 +226,31 @@ public class AuthentificationDAO {
             cx.close();
         }
     }
+    public static String inscrireElecteurReferendum(String idReferendum, String idUtilisateur)
+            throws SQLException {
+
+        if (idReferendum == null || idReferendum.trim().isEmpty() || idReferendum.length() > 5) {
+            return "Identifiant referendum invalide : 5 caracteres maximum";
+        }
+        if (idUtilisateur == null || idUtilisateur.trim().isEmpty() || idUtilisateur.length() > 5) {
+            return "Identifiant electeur invalide : 5 caracteres maximum";
+        }
+
+        Connection cx = BaseDeDonnees.ouvrir();
+        try {
+            CallableStatement proc = cx.prepareCall(
+                "{ call inscrireElecteurReferendum(?, ?, ?) }");
+            proc.setString(1, idReferendum);
+            proc.setString(2, idUtilisateur);
+            proc.registerOutParameter(3, Types.VARCHAR);
+            proc.execute();
+
+            String message = proc.getString(3);
+            proc.close();
+            return message;
+
+        } finally {
+            cx.close();
+        }
+    }
 }
