@@ -7,6 +7,13 @@ import java.net.Socket;
 
 public class ElecteurService {
 
+    // Jeton recu du serveur a la connexion. Servira a prouver qui on est.
+    private static String jetonSession = "";
+
+    public static String getJetonSession() {
+        return jetonSession;
+    }
+
     /**
      * Encapsule la logique d'inscription d'un électeur.
      *
@@ -54,6 +61,52 @@ public class ElecteurService {
             System.err.println("Erreur réseau/flux : " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    /**
+     * Envoie un login et un mot de passe au serveur et recupere la reponse.
+     *
+     * @param socket     la socket connectee au serveur
+     * @param login      le login saisi
+     * @param motDePasse le mot de passe saisi, en clair
+     * @return le message a afficher a l'utilisateur
+     */
+    public static String seConnecter(Socket socket, String login, String motDePasse) {
+        try {
+            LoginRequest loginRequest = LoginRequest.newBuilder()
+                    .setLogin(login)
+                    .setMotDePasse(motDePasse)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setLoginRequest(loginRequest)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            LoginResponse response = LoginResponse.parseDelimitedFrom(socket.getInputStream());
+
+            if (response == null) {
+                return "Réponse vide du serveur";
+            }
+
+            if (!response.getSuccess()) {
+                return response.getMessage();
+            }
+
+            jetonSession = response.getJetonSession();
+
+            String resultat = "Connecté en tant que " + response.getRole();
+            if (response.getDoitChangerMdp()) {
+                resultat = resultat + " — mot de passe à changer";
+            }
+            return resultat;
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
         }
     }
 
