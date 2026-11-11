@@ -7,18 +7,25 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class systeme {
 
     private static final ConcurrentHashMap<String, InfosStockageElecteur> baseElecteursTemporaire = new ConcurrentHashMap<>();
-    public static void main(String[] args) {
 
+    // Pour retenir qui est connecté : jeton -> utilisateur. et vide quand le serveur redémarre.
+    private static final ConcurrentHashMap<String, Connecte> sessions = new ConcurrentHashMap<>();
+
+    public static class Connecte {
+        public String idUtilisateur;
+        public String role;
+    }
+
+    public static void main(String[] args) {
 
         int port = 8080;
         System.out.println("[SERVEUR] Démarrage de l'urne sur le port " + port + "...");
-
-
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
 
@@ -54,7 +61,10 @@ public class systeme {
                 while ((clientMsg = ClientMessage.parseDelimitedFrom(s.getInputStream())) != null) {
 
                     // Routage selon le type de requête reçue grâce au oneof
-                    if (clientMsg.hasRegisterRequest()) {
+                    if (clientMsg.hasLoginRequest()) {
+                        traiterConnexion(clientMsg.getLoginRequest(), s);
+
+                    } else if (clientMsg.hasRegisterRequest()) {
                         traiterInscription(clientMsg.getRegisterRequest(), s);
 
                     } else if (clientMsg.hasVoteRequest()) {
@@ -69,7 +79,6 @@ public class systeme {
                     } else if (clientMsg.hasUpdateElecteurRequest()) {
                         traiterModification(clientMsg.getUpdateElecteurRequest(), s);
 
-
                     } else {
                         System.out.println("[SERVEUR] Type de message inconnu ou non géré.");
                     }
@@ -81,6 +90,59 @@ public class systeme {
                 System.err.println("[SERVEUR] Erreur réseau ou déconnexion brusque : " + e.getMessage());
             }
         }
+    }
+
+    private static void traiterConnexion(LoginRequest request, Socket socket) throws IOException {
+        String login = request.getLogin().trim();
+        String motDePasse = request.getMotDePasse();
+
+        System.out.println("[SERVEUR] Tentative de connexion : " + login);
+
+        boolean succes = false;
+        String message = "";
+        String jeton = "";
+        String role = "";
+        boolean doitChangerMdp = false;
+
+        if (login.isEmpty() || motDePasse.isEmpty()) {
+            message = "Identifiant et mot de passe obligatoires";
+        } else {
+            try {
+                AuthentificationDAO.Resultat resultat = AuthentificationDAO.connecter(login, motDePasse);
+
+                succes = resultat.succes;
+                message = resultat.message;
+
+                if (succes) {
+                    role = resultat.role;
+                    doitChangerMdp = resultat.doitChangerMdp;
+
+                    // On fabrique un jeton au hasard et on retient à qui il appartient
+                    jeton = UUID.randomUUID().toString();
+
+                    Connecte c = new Connecte();
+                    c.idUtilisateur = resultat.idUtilisateur;
+                    c.role = resultat.role;
+                    sessions.put(jeton, c);
+
+                    System.out.println("[SERVEUR] " + login + " connecté en tant que " + role);
+                }
+            } catch (SQLException e) {
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        LoginResponse response = LoginResponse.newBuilder()
+                .setSuccess(succes)
+                .setMessage(message)
+                .setJetonSession(jeton)
+                .setRole(role)
+                .setDoitChangerMdp(doitChangerMdp)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
     }
 
     private static void traiterInscription(RegisterRequest request, Socket socket) throws IOException {
@@ -139,7 +201,7 @@ public class systeme {
     }
 
     private static void traiterPublicKey(PublicKeyRequest request, Socket socket) throws IOException {
-        System.out.println("[SERveur] Demande de clé publique reçue.");
+        System.out.println("[SERVEUR] Demande de clé publique reçue.");
 
         // TODO: Envoyer la PublicKeyResponse
     }
@@ -172,8 +234,6 @@ public class systeme {
     private static String recupererMotDePasse(com.google.protobuf.ByteString octets) {
         return octets.toStringUtf8();
     }
-
-
 
     private static void traiterModification(UpdateElecteurRequest request, Socket socket) throws IOException {
         System.out.println("[SERVEUR] Modification demandée pour : " + request.getElecteurId());
