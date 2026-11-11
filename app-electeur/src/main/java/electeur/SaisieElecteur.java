@@ -5,11 +5,12 @@ import java.util.Scanner;
 public class SaisieElecteur {
 
     private static final Scanner scanner = new Scanner(System.in);
-     public static class InfosConnexion {
+
+    public static class InfosConnexion {
         private final String login;
         private final String motDePasse;
 
- public InfosConnexion(String login, String motDePasse) {
+        public InfosConnexion(String login, String motDePasse) {
             this.login = login;
             this.motDePasse = motDePasse;
         }
@@ -27,40 +28,40 @@ public class SaisieElecteur {
         return new InfosConnexion(login, motDePasse);
     }
 
- public static class InfosInscription {
-     private final String electeurId;
-     private final String login;
-     private final String mdpClair;
-     private final String nom;
-     private final String prenom;
+    public static class InfosInscription {
+        private final String electeurId;
+        private final String login;
+        private final String mdpClair;
+        private final String nom;
+        private final String prenom;
 
+        public InfosInscription(String electeurId, String login, String mdpClair,
+                                String nom, String prenom) {
+            this.electeurId = electeurId;
+            this.login = login;
+            this.mdpClair = mdpClair;
+            this.nom = nom;
+            this.prenom = prenom;
+        }
 
-     public InfosInscription(String electeurId, String login, String mdpClair,
-                             String nom, String prenom) {
-         this.electeurId = electeurId;
-         this.login = login;
-         this.mdpClair = mdpClair;
-         this.nom = nom;
-         this.prenom = prenom;
-     }
-
-    public String getElecteurId() { return electeurId; }
-    public String getLogin() { return login; }
-    public String getMdpClair() { return mdpClair; }
-     public String getNom() { return nom; }
-     public String getPrenom() { return prenom; }
-}
+        public String getElecteurId() { return electeurId; }
+        public String getLogin() { return login; }
+        public String getMdpClair() { return mdpClair; }
+        public String getNom() { return nom; }
+        public String getPrenom() { return prenom; }
+    }
 
     public static int afficherMenuEtChoisir() {
 
-        //uniquement l'orga doit pouvoir ajouter un electeur
-        //donc on devra modifier l'affichage si la personne est connectee en admin
+        // Les options marquees (organisateur) sont refusees par le serveur
+        // si l'utilisateur n'est pas connecte avec ce role.
         System.out.println("\n=== MENU PRINCIPAL ÉLECTEUR ===");
-        System.out.println("1. Inscrire un compte électeur");
+        System.out.println("1. Inscrire un compte électeur (organisateur)");
         System.out.println("2. Se connecter");
         System.out.println("3. Voter (à venir)");
-        System.out.println("4. Supprimer un électeur (organisateur)"); // TODO: réserver à l'organisateur
-        System.out.println("5. Modifier un électeur (organisateur)");  // TODO: réserver à l'organisateur
+        System.out.println("4. Supprimer un électeur (organisateur)");
+        System.out.println("5. Modifier un électeur (organisateur)");
+        System.out.println("6. Inscrire un électeur à un référendum (organisateur)");
         System.out.println("0. Quitter");
         System.out.print("Faites votre choix : ");
 
@@ -98,8 +99,6 @@ public class SaisieElecteur {
         System.out.print("Entrez l'identifiant de l'électeur à supprimer : ");
         return scanner.nextLine().trim();
     }
-
-
 
     public static class InfosModification {
         private final String electeurId;
@@ -147,7 +146,28 @@ public class SaisieElecteur {
         return reponse.equals("o") || reponse.equals("oui");
     }
 
+    public static class InfosInscriptionReferendum {
+        private final String idReferendum;
+        private final String idElecteur;
 
+        public InfosInscriptionReferendum(String idReferendum, String idElecteur) {
+            this.idReferendum = idReferendum;
+            this.idElecteur = idElecteur;
+        }
 
+        public String getIdReferendum() { return idReferendum; }
+        public String getIdElecteur() { return idElecteur; }
+    }
 
+    public static InfosInscriptionReferendum demanderInformationsInscriptionReferendum() {
+        System.out.println("\n--- INSCRIPTION À UN RÉFÉRENDUM ---");
+
+        System.out.print("Identifiant du référendum : ");
+        String idReferendum = scanner.nextLine().trim();
+
+        System.out.print("Identifiant de l'électeur : ");
+        String idElecteur = scanner.nextLine().trim();
+
+        return new InfosInscriptionReferendum(idReferendum, idElecteur);
+    }
 }
