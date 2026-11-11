@@ -2,6 +2,7 @@ package systeme;
 
 import com.g3.vote.proto.*;
 import systeme.persistance.AuthentificationDAO;
+import systeme.persistance.VoteDAO;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -197,7 +198,11 @@ public class systeme {
     private static void traiterVote(VoteRequest request, Socket socket) throws IOException {
         System.out.println("[SERVEUR] Réception d'un bulletin de vote pour l'électeur : " + request.getElecteurId());
 
-        // TODO: Ajouter la logique de traitement et de réponse du vote
+        VoteResponse response = new VoteTraitement(VoteDAO::enregistrer).traiter(request);
+
+        System.out.println("[SERVEUR] Réponse au vote : " + response.getMessage());
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
     }
 
     private static void traiterPublicKey(PublicKeyRequest request, Socket socket) throws IOException {
