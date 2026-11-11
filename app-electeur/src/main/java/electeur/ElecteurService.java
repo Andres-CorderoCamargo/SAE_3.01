@@ -169,4 +169,29 @@ public class ElecteurService {
     private static byte[] preparerMotDePasse(String mdpClair) {
         return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
+        public static String inscrireElecteurReferendum(Socket socket, String idReferendum, String idElecteur) {
+        try {
+            InscrireElecteurRequest request = InscrireElecteurRequest.newBuilder()
+                    .setReferendumId(idReferendum)
+                    .setElecteurId(idElecteur)
+                    .setJetonSession(jetonSession)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setInscrireElecteurRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            InscrireElecteurResponse response =
+                    InscrireElecteurResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
 }
