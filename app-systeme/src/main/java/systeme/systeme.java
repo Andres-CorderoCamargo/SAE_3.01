@@ -92,7 +92,9 @@ public class systeme {
 
                     } else if (clientMsg.hasUpdateElecteurRequest()) {
                         traiterModification(clientMsg.getUpdateElecteurRequest(), s);
-
+                        
+                    } else if (clientMsg.hasInscrireElecteurRequest()) {
+                        traiterInscriptionReferendum(clientMsg.getInscrireElecteurRequest(), s);
                     } else {
                         System.out.println("[SERVEUR] Type de message inconnu ou non géré.");
                     }
