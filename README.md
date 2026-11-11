@@ -15,7 +15,7 @@ Le système permet notamment de :
 
 ## Configuration du serveur (poivre des mots de passe)
 
-Les mots de passe sont hachés côté serveur avec la méthode du TD8 de R3.01 : HMAC-SHA256 avec un poivre secret, puis bcrypt (voir `MotDePasse`). Le poivre ne doit jamais être écrit dans le code ni poussé sur GitHub : on le lit dans la variable d'environnement `SAE_POIVRE`, à définir avant de lancer le serveur.
+Les mots de passe sont hachés côté serveur avec la méthode demandé par le client, puis bcrypt (voir `MotDePasse`). Le poivre ne doit jamais être écrit dans le code ni poussé sur GitHub, à la place on le lit dans la variable d'environnement `SAE_POIVRE`, à définir avant de lancer le serveur.
 
 ```bash
 openssl rand -base64 18        # génère un poivre (à faire une seule fois)
