@@ -78,6 +78,8 @@ message ClientMessage {
     UpdateElecteurRequest update_electeur_request = 6;
     LoginRequest login_request = 7;
     InscrireElecteurRequest inscrire_electeur_request = 8;
+    LancerReferendumRequest lancer_referendum_request = 9;
+    CloturerReferendumRequest cloturer_referendum_request = 10;
   }
 }
 
@@ -123,6 +125,25 @@ message InscrireElecteurRequest {
 }
 
 message InscrireElecteurResponse {
+  bool success = 1;
+  string message = 2;
+}
+message LancerReferendumRequest {
+  string referendum_id = 1;
+  string jeton_session = 2;
+}
+
+message LancerReferendumResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message CloturerReferendumRequest {
+  string referendum_id = 1;
+  string jeton_session = 2;
+}
+
+message CloturerReferendumResponse {
   bool success = 1;
   string message = 2;
 }
