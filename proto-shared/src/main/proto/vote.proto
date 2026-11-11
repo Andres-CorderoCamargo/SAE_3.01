@@ -14,8 +14,12 @@ message PublicKeyResponse {
 
 
 message VoteRequest {
+  reserved 2;  // ancien vote_chiffre : un seul bloc, incompatible avec ElGamal
+
   string electeur_id = 1;
-  bytes vote_chiffre = 2;
+  string referendum_id = 3;
+  bytes bulletin_u = 4;   // g^r
+  bytes bulletin_v = 5;   // h^r * g^vote
 }
 
 message VoteResponse {
@@ -71,6 +75,7 @@ message ClientMessage {
     ResultRequest result_request = 4;
     DeleteElecteurRequest delete_electeur_request = 5;
     UpdateElecteurRequest update_electeur_request = 6;
+    LoginRequest login_request = 7;
   }
 }
 
@@ -93,4 +98,17 @@ message UpdateElecteurRequest {
 message UpdateElecteurResponse {
   bool success = 1;
   string message = 2;
+}
+
+message LoginRequest {
+  string login = 1;
+  string mot_de_passe = 2;   // en clair : le hachage se fait cote serveur
+}
+
+message LoginResponse {
+  bool success = 1;
+  string message = 2;
+  string jeton_session = 3;
+  string role = 4;            // ELECTEUR, ORGANISATEUR ou SCRUTATEUR
+  bool doit_changer_mdp = 5;
 }
