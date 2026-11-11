@@ -146,6 +146,10 @@ public class systeme {
             } catch (SQLException e) {
                 message = "Erreur base de données";
                 System.err.println("[SERVEUR] " + e.getMessage());
+            } catch (IllegalStateException e) {
+                // Poivre SAE_POIVRE non configuré : erreur du serveur, pas du client.
+                message = "Erreur interne du serveur, réessayez plus tard.";
+                System.err.println("[SERVEUR] Vérification impossible : " + e.getMessage());
             }
         }
 
@@ -200,6 +204,11 @@ public class systeme {
                 success = false;
                 message = "Erreur base de données";
                 System.err.println("[SERVEUR] " + e.getMessage());
+            } catch (IllegalStateException e) {
+                // Poivre SAE_POIVRE non configuré : erreur du serveur, pas du client.
+                success = false;
+                message = "Erreur interne du serveur, réessayez plus tard.";
+                System.err.println("[SERVEUR] Hachage impossible : " + e.getMessage());
             }
         }
 
