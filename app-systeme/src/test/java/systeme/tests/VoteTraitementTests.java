@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("[Voter] VoteTraitement (sans base)")
+@DisplayName("[Voter] VoteTraitement")
 class VoteTraitementTest {
 
     private static VoteRequest requete(String electeur, String referendum, byte[] u, byte[] v) {
@@ -28,7 +28,6 @@ class VoteTraitementTest {
         return requete("U3", "R1", new byte[]{1, 2, 3}, new byte[]{4, 5, 6});
     }
 
-    /** Un enregistreur qui répond toujours "code" et compte ses appels. */
     private static class Faux implements VoteTraitement.Enregistreur {
         final String code;
         final AtomicInteger appels = new AtomicInteger();
@@ -46,7 +45,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("bulletin chiffré valide : confirmation, et le bulletin arrive intact à l'enregistrement")
+    @DisplayName("Bulletin chiffré valide : confirmation, et le bulletin arrive intact à l'enregistrement")
     void confirmation() {
         Faux faux = new Faux("OK");
         VoteResponse r = new VoteTraitement(faux).traiter(requeteValide());
@@ -61,7 +60,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("référendum clos : refus, is_late = true")
+    @DisplayName("Référendum clos : refus, is_late = true")
     void referendumClos() {
         VoteResponse r = new VoteTraitement(new Faux("REFERENDUM_FERME")).traiter(requeteValide());
 
@@ -71,7 +70,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("électeur non inscrit : refus")
+    @DisplayName("Electeur non inscrit : refus")
     void nonInscrit() {
         VoteResponse r = new VoteTraitement(new Faux("NON_INSCRIT")).traiter(requeteValide());
 
@@ -81,7 +80,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("électeur ayant déjà voté : refus")
+    @DisplayName("Electeur ayant déjà voté : refus")
     void dejaVote() {
         VoteResponse r = new VoteTraitement(new Faux("DEJA_VOTE")).traiter(requeteValide());
 
@@ -90,7 +89,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("référendum inconnu : refus")
+    @DisplayName("Référendum inconnu : refus")
     void referendumInconnu() {
         VoteResponse r = new VoteTraitement(new Faux("REFERENDUM_INCONNU")).traiter(requeteValide());
 
@@ -99,7 +98,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("code inattendu ou null : refus, jamais une confirmation")
+    @DisplayName("Code inattendu ou null : refus, jamais une confirmation")
     void codeInattendu() {
         assertFalse(new VoteTraitement(new Faux("BIZARRE")).traiter(requeteValide()).getSuccess());
         assertFalse(new VoteTraitement(new Faux(null)).traiter(requeteValide()).getSuccess());
@@ -107,7 +106,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("panne de base : refus, pas d'exception")
+    @DisplayName("Panne de base : refus, pas d'exception")
     void panneBase() {
         VoteTraitement t = new VoteTraitement((r, e, u, v) -> { throw new SQLException("Oracle HS"); });
         VoteResponse r = assertDoesNotThrow(() -> t.traiter(requeteValide()));
@@ -117,7 +116,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("message mal formé : refusé sans toucher à la base")
+    @DisplayName("Message mal formé : refusé sans toucher à la base")
     void messageMalForme() {
         byte[] ok = {1};
         VoteRequest[] mauvaises = {
@@ -142,7 +141,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("bulletin de 4096 octets (limite) accepté")
+    @DisplayName("Bulletin de 4096 octets (limite) accepté")
     void limite() {
         Faux faux = new Faux("OK");
         VoteResponse r = new VoteTraitement(faux)
@@ -151,7 +150,7 @@ class VoteTraitementTest {
     }
 
     @Test
-    @DisplayName("les espaces autour des identifiants sont retirés")
+    @DisplayName("Les espaces autour des identifiants sont retirés")
     void trim() {
         Faux faux = new Faux("OK");
         new VoteTraitement(faux).traiter(requete(" U3 ", " R1 ", new byte[]{1}, new byte[]{1}));
