@@ -77,6 +77,7 @@ message ClientMessage {
     DeleteElecteurRequest delete_electeur_request = 5;
     UpdateElecteurRequest update_electeur_request = 6;
     LoginRequest login_request = 7;
+    InscrireElecteurRequest inscrire_electeur_request = 8;
   }
 }
 
@@ -114,4 +115,14 @@ message LoginResponse {
   string jeton_session = 3;
   string role = 4;            // ELECTEUR, ORGANISATEUR ou SCRUTATEUR
   bool doit_changer_mdp = 5;
+}
+message InscrireElecteurRequest {
+  string referendum_id = 1;
+  string electeur_id = 2;
+  string jeton_session = 3;
+}
+
+message InscrireElecteurResponse {
+  bool success = 1;
+  string message = 2;
 }
