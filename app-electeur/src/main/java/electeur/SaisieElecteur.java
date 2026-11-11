@@ -5,6 +5,27 @@ import java.util.Scanner;
 public class SaisieElecteur {
 
     private static final Scanner scanner = new Scanner(System.in);
+     public static class InfosConnexion {
+        private final String login;
+        private final String motDePasse;
+
+ public InfosConnexion(String login, String motDePasse) {
+            this.login = login;
+            this.motDePasse = motDePasse;
+        }
+
+        public String getLogin() { return login; }
+        public String getMotDePasse() { return motDePasse; }
+    }
+
+    public static InfosConnexion demanderInformationsConnexion() {
+        System.out.println("\n--- CONNEXION ---");
+        System.out.print("Login : ");
+        String login = scanner.nextLine().trim();
+        System.out.print("Mot de passe : ");
+        String motDePasse = scanner.nextLine();
+        return new InfosConnexion(login, motDePasse);
+    }
 
  public static class InfosInscription {
      private final String electeurId;
