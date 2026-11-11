@@ -6,6 +6,7 @@ DROP TABLE Inscriptions CASCADE CONSTRAINT;
 DROP TABLE Referendums CASCADE CONSTRAINT;
 DROP TABLE Electeurs CASCADE CONSTRAINT;
 DROP TABLE Utilisateurs CASCADE CONSTRAINT;
+DROP SEQUENCE seqBulletin CASCADE CONSTRAINT;
 
 
 -- ---------------------------------------------------------------------
@@ -75,3 +76,17 @@ CONSTRAINT fk_Inscriptions_idReferendum
     FOREIGN KEY (idReferendum) REFERENCES Referendums(idReferendum),
 CONSTRAINT fk_Inscriptions_idUtilisateur
     FOREIGN KEY (idUtilisateur) REFERENCES Electeurs(idUtilisateur));
+
+-- ---------------------------------------------------------------------
+-- Bulletins : les bulletins chiffres recus par l'urne.
+-- ---------------------------------------------------------------------
+
+CREATE TABLE Bulletins
+(idBulletin NUMBER,
+ idReferendum VARCHAR(5) NOT NULL,
+ bulletinU RAW(2000) NOT NULL, -- D'après l'IA, RAW facilite la lecture avec ElGamal
+ bulletinV RAW(2000) NOT NULL,
+ CONSTRAINT pk_Bulletins PRIMARY KEY (idBulletin),
+ CONSTRAINT fk_Bulletins_idReferendum FOREIGN KEY (idReferendum) REFERENCES Referendums(idReferendum));
+
+CREATE SEQUENCE seqBulletin START WITH 1 INCREMENT BY 1; -- Je ne sais pas si ça vient là ou avant !
