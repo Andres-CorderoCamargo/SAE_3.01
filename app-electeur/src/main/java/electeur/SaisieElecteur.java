@@ -99,8 +99,6 @@ public class SaisieElecteur {
         return scanner.nextLine().trim();
     }
 
-
-
     public static class InfosModification {
         private final String electeurId;
         private final String login;
@@ -118,6 +116,43 @@ public class SaisieElecteur {
         public String getLogin() { return login; }
         public String getNom() { return nom; }
         public String getPrenom() { return prenom; }
+    }
+
+    public static class InfosVote {
+        private final String electeurId;
+        private final String referendumId;
+        private final int vote;
+
+        public InfosVote(String electeurId, String referendumId, int vote) {
+            this.electeurId = electeurId;
+            this.referendumId = referendumId;
+            this.vote = vote;
+        }
+
+        public String getElecteurId() { return electeurId; }
+        public String getReferendumId() { return referendumId; }
+        public int getVote() { return vote; }
+    }
+
+    public static InfosVote demanderInformationsVote() {
+        System.out.println("\n--- VOTER ----");
+
+        System.out.print("Votre identifiant électeur : ");
+        String electeurId = scanner.nextLine().trim();
+
+        System.out.print("Identifiant du référendum : ");
+        String referendumId = scanner.nextLine().trim();
+
+        System.out.print("Votre vote (1 = oui, 0 = non) : ");
+
+        int vote;
+        try {
+            vote = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            // On ne les compte pas
+            vote = -1;
+        }
+        return new InfosVote(electeurId, referendumId, vote);
     }
 
     public static InfosModification demanderInformationsModification() {

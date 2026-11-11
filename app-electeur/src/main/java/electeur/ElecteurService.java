@@ -1,4 +1,5 @@
 package electeur;
+
 import com.g3.vote.proto.*;
 import com.google.protobuf.ByteString;
 
@@ -27,9 +28,7 @@ public class ElecteurService {
      */
     public static boolean inscrireElecteur(Socket socket, String electeurId, String login, String mdpClair,String nom,String prenom) {
         try {
-
             byte[] mdpOctets  = preparerMotDePasse(mdpClair);
-
 
             RegisterRequest registerRequest = RegisterRequest.newBuilder()
                     .setElecteurId(electeurId)
@@ -38,11 +37,9 @@ public class ElecteurService {
                     .setNom(nom)
                     .setPrenom(prenom)
                     .build();
-
             ClientMessage clientMsg = ClientMessage.newBuilder()
                     .setRegisterRequest(registerRequest)
                     .build();
-
             clientMsg.writeDelimitedTo(socket.getOutputStream());
             socket.getOutputStream().flush();
 
@@ -159,6 +156,46 @@ public class ElecteurService {
         } catch (IOException e) {
             System.err.println("Erreur réseau/flux : " + e.getMessage());
             return "Erreur réseau";
+        }
+    }
+
+    public static VoteResponse voter(Socket socket, String electeurId, String referendumId,
+                                     byte[] bulletinU, byte[] bulletinV) {
+        try {
+            // Construction de message de vote :
+            VoteRequest request = VoteRequest.newBuilder()
+                    .setElecteurId(electeurId)
+                    .setReferendumId(referendumId)
+                    .setBulletinU(ByteString.copyFrom(bulletinU))
+                    .setBulletinV(ByteString.copyFrom(bulletinV))
+                    .build();
+
+            // Puis vote placé dans ClientMesage
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setVoteRequest(request)
+                    .build();
+
+            // Envoie socket
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            VoteResponse response = VoteResponse.parseDelimitedFrom(socket.getInputStream());
+
+            if (response == null) {
+                return VoteResponse.newBuilder()
+                        .setSuccess(false)
+                        .setMessage("Réponse vide du serveur")
+                        .build();
+            }
+            return response;
+
+        } catch (IOException e) {
+            // Si jamais un erreur, le système renvoie une réponse locale..
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return VoteResponse.newBuilder()
+                    .setSuccess(false)
+                    .setMessage("Erreur réseau")
+                    .build();
         }
     }
 
