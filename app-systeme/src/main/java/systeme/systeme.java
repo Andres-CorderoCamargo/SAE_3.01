@@ -304,4 +304,41 @@ public class systeme {
         response.writeDelimitedTo(socket.getOutputStream());
         socket.getOutputStream().flush();
     }
+        private static void traiterInscriptionReferendum(InscrireElecteurRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Inscription de " + request.getElecteurId()
+                + " au référendum " + request.getReferendumId());
+
+        String idReferendum = request.getReferendumId().trim();
+        String idElecteur = request.getElecteurId().trim();
+
+        boolean success;
+        String message;
+
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Inscription refusée : pas organisateur");
+
+        } else if (idReferendum.isEmpty() || idElecteur.isEmpty()) {
+            success = false;
+            message = "Échec : tous les champs sont obligatoires.";
+        } else {
+            try {
+                message = AuthentificationDAO.inscrireElecteurReferendum(idReferendum, idElecteur);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        InscrireElecteurResponse response = InscrireElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
 }
