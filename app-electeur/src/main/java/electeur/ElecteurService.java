@@ -1,9 +1,6 @@
 package electeur;
-import com.g3.vote.proto.ClientMessage;
-import com.g3.vote.proto.RegisterRequest;
-import com.g3.vote.proto.RegisterResponse;
+import com.g3.vote.proto.*;
 import com.google.protobuf.ByteString;
-import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -16,19 +13,23 @@ public class ElecteurService {
      * @_socket         La socket connectée au serveur (l'urne)
      * @param electeurId L'identifiant unique de l'électeur
      * @param login      Le login choisi
-     * @param mdpClair   Le mot de passe en clair (qui sera chiffré)
+     * @param mdpClair   Le mot de passe en clair
+     * @param nom        le nom de l'électeur
+     * @param prenom     le prénom de l'électeur
      * @return true si l'inscription a réussi, false sinon
      */
-    public static boolean inscrireElecteur(Socket socket, String electeurId, String login, String mdpClair) {
+    public static boolean inscrireElecteur(Socket socket, String electeurId, String login, String mdpClair,String nom,String prenom) {
         try {
-            // Chiffrement du mot de passe
-            byte[] mdpChiffre = chiffrerMotDePasse(mdpClair);
+
+            byte[] mdpOctets  = preparerMotDePasse(mdpClair);
 
 
             RegisterRequest registerRequest = RegisterRequest.newBuilder()
                     .setElecteurId(electeurId)
                     .setLogin(login)
-                    .setPasswordChiffre(ByteString.copyFrom(mdpChiffre))
+                    .setPasswordChiffre(ByteString.copyFrom(mdpOctets))
+                    .setNom(nom)
+                    .setPrenom(prenom)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -56,10 +57,60 @@ public class ElecteurService {
         }
     }
 
+    public static String supprimerElecteur(Socket socket, String electeurId) {
+        try {
+            DeleteElecteurRequest request = DeleteElecteurRequest.newBuilder()
+                    .setElecteurId(electeurId)
+                    .build();
 
-    private static byte[] chiffrerMotDePasse(String mdp) {
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setDeleteElecteurRequest(request)
+                    .build();
 
-        String mdpHache = BCrypt.hashpw(mdp, BCrypt.gensalt(12));
-        return mdpHache.getBytes();
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            DeleteElecteurResponse response =
+                    DeleteElecteurResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
+
+    public static String modifierElecteur(Socket socket, String electeurId, String login,
+                                          String nom, String prenom) {
+        try {
+            UpdateElecteurRequest request = UpdateElecteurRequest.newBuilder()
+                    .setElecteurId(electeurId)
+                    .setLogin(login)
+                    .setNom(nom)
+                    .setPrenom(prenom)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setUpdateElecteurRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            UpdateElecteurResponse response =
+                    UpdateElecteurResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
+
+
+    private static byte[] preparerMotDePasse(String mdpClair) {
+        return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 }

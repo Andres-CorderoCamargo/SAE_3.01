@@ -27,7 +27,9 @@ public class electeur {
                                 socket,
                                 infos.getElecteurId(),
                                 infos.getLogin(),
-                                infos.getMdpClair()
+                                infos.getMdpClair(),
+                                infos.getNom(),
+                                infos.getPrenom()
                         );
                         if (reussi) {
                             System.out.println("[CLIENT] Inscription confirmée par le serveur.");
@@ -44,6 +46,30 @@ public class electeur {
                     case 3:
                         // Vote
                         System.out.println("[INFO] La fonctionnalité de vote est à implémenter dans ElecteurService.");
+                        break;
+
+                    case 4:
+                        String idASupprimer = SaisieElecteur.demanderIdSuppression();
+                        if (idASupprimer.isEmpty()) {
+                            System.out.println("[CLIENT] Identifiant vide, suppression annulée.");
+                        } else if (SaisieElecteur.demanderConfirmationSuppression(idASupprimer)) {
+                            String resultat = ElecteurService.supprimerElecteur(socket, idASupprimer);
+                            System.out.println("[CLIENT] " + resultat);
+                        } else {
+                            System.out.println("[CLIENT] Suppression annulée.");
+                        }
+                        break;
+
+                    case 5:
+                        SaisieElecteur.InfosModification modif = SaisieElecteur.demanderInformationsModification();
+                        String resultatModif = ElecteurService.modifierElecteur(
+                                socket,
+                                modif.getElecteurId(),
+                                modif.getLogin(),
+                                modif.getNom(),
+                                modif.getPrenom()
+                        );
+                        System.out.println("[CLIENT] " + resultatModif);
                         break;
 
                     case 0:

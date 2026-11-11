@@ -1,10 +1,12 @@
 package systeme;
 
 import com.g3.vote.proto.*;
+import systeme.persistance.AuthentificationDAO;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class systeme {
@@ -61,6 +63,13 @@ public class systeme {
                     } else if (clientMsg.hasPublicKeyRequest()) {
                         traiterPublicKey(clientMsg.getPublicKeyRequest(), s);
 
+                    } else if (clientMsg.hasDeleteElecteurRequest()) {
+                        traiterSuppression(clientMsg.getDeleteElecteurRequest(), s);
+
+                    } else if (clientMsg.hasUpdateElecteurRequest()) {
+                        traiterModification(clientMsg.getUpdateElecteurRequest(), s);
+
+
                     } else {
                         System.out.println("[SERVEUR] Type de message inconnu ou non géré.");
                     }
@@ -77,43 +86,47 @@ public class systeme {
     private static void traiterInscription(RegisterRequest request, Socket socket) throws IOException {
         System.out.println("[SERVEUR] Traitement inscription pour : " + request.getLogin());
 
-        String electeurId = request.getElecteurId();
-        String login = request.getLogin();
-
-        String mdpChiffreStr = request.getPasswordChiffre().toStringUtf8();
+        String electeurId = request.getElecteurId().trim();
+        String login = request.getLogin().trim();
+        String mdpClair = recupererMotDePasse(request.getPasswordChiffre());
+        String nom = request.getNom().trim();
+        String prenom = request.getPrenom().trim();
 
         boolean success;
         String message;
 
         // Vérifications de base
-        if (electeurId == null || electeurId.isEmpty() || login == null || login.isEmpty()) {
+        if (electeurId.isEmpty() || login.isEmpty() || mdpClair.isEmpty()
+                || nom.isEmpty() || prenom.isEmpty()) {
             success = false;
-            message = "Échec : L'identifiant et le login ne peuvent pas être vides.";
-        }
-        // Vérification si l'électeur existe déjà
-        else if (baseElecteursTemporaire.containsKey(electeurId)) {
-            success = false;
-            message = "Échec : L'électeur avec l'ID " + electeurId + " est déjà inscrit.";
-        }
-        else {
-            // 3. Enregistrement temporaire en mémoire
-            InfosStockageElecteur infos = new InfosStockageElecteur(electeurId, login, mdpChiffreStr);
-            baseElecteursTemporaire.put(electeurId, infos);
+            message = "Échec : tous les champs sont obligatoires.";
+        } else {
+            try {
+                // Écriture en base : le DAO hache le mot de passe puis appelle la procédure
+                message = AuthentificationDAO.ajouterElecteur(electeurId, login, mdpClair, nom, prenom);
+                success = message.equals("OK");
 
-            success = true;
-            message = "Inscription réussie. Contenu de la base : " + baseElecteursTemporaire.toString();
-
-            System.out.println("[SERVEUR - MÉMOIRE] Électeur ajouté. Total inscrits : " + baseElecteursTemporaire.size());
+                if (success) {
+                    // Debug uniquement : copie en mémoire, sans mot de passe ni hash
+                    baseElecteursTemporaire.put(electeurId,
+                            new InfosStockageElecteur(electeurId, login, "(en base)"));
+                    System.out.println("[SERVEUR - DEBUG] Électeurs en mémoire : "
+                            + baseElecteursTemporaire.size());
+                    message = "Inscription réussie.";
+                }
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
         }
 
         System.out.println("[SERVEUR] Message renvoyé : " + message);
 
-        // Construction et envoi de la réponse
         RegisterResponse response = RegisterResponse.newBuilder()
                 .setSuccess(success)
                 .setMessage(message)
                 .build();
-
 
         response.writeDelimitedTo(socket.getOutputStream());
         socket.getOutputStream().flush();
@@ -129,5 +142,76 @@ public class systeme {
         System.out.println("[SERveur] Demande de clé publique reçue.");
 
         // TODO: Envoyer la PublicKeyResponse
+    }
+
+    private static void traiterSuppression(DeleteElecteurRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Suppression demandée pour : " + request.getElecteurId());
+        String electeurId = request.getElecteurId().trim();
+        boolean success;
+        String message;
+
+        try {
+            // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
+            message = AuthentificationDAO.supprimerElecteur(electeurId);
+            success = message.equals("OK");
+        } catch (SQLException e) {
+            success = false;
+            message = "Erreur base de données";
+            System.err.println("[SERVEUR] " + e.getMessage());
+        }
+
+        DeleteElecteurResponse response = DeleteElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
+
+    private static String recupererMotDePasse(com.google.protobuf.ByteString octets) {
+        return octets.toStringUtf8();
+    }
+
+
+
+    private static void traiterModification(UpdateElecteurRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Modification demandée pour : " + request.getElecteurId());
+
+        String electeurId = request.getElecteurId().trim();
+        String login = request.getLogin().trim();
+        String nom = request.getNom().trim();
+        String prenom = request.getPrenom().trim();
+
+        boolean success;
+        String message;
+
+        if (electeurId.isEmpty() || login.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
+            success = false;
+            message = "Échec : tous les champs sont obligatoires.";
+        } else {
+            try {
+                // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
+                message = AuthentificationDAO.modifierElecteur(electeurId, login, nom, prenom);
+                success = message.equals("OK");
+
+                if (success && baseElecteursTemporaire.containsKey(electeurId)) {
+                    baseElecteursTemporaire.put(electeurId,
+                            new InfosStockageElecteur(electeurId, login, "(en base)"));
+                }
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        UpdateElecteurResponse response = UpdateElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
     }
 }
