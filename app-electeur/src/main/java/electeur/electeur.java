@@ -39,8 +39,15 @@ public class electeur {
                         break;
 
                     case 2:
-                        // Connexion (exemple de future fonctionnalité)
-                        System.out.println("[INFO] La fonctionnalité de connexion est à implémenter dans ElecteurService.");
+                        // Connexion
+                        SaisieElecteur.InfosConnexion identifiants =
+                                SaisieElecteur.demanderInformationsConnexion();
+                        String resultatConnexion = ElecteurService.seConnecter(
+                                socket,
+                                identifiants.getLogin(),
+                                identifiants.getMotDePasse()
+                        );
+                        System.out.println("[CLIENT] " + resultatConnexion);
                         break;
 
                     case 3:
