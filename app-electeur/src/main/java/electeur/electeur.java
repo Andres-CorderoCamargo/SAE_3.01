@@ -78,6 +78,16 @@ public class electeur {
                         );
                         System.out.println("[CLIENT] " + resultatModif);
                         break;
+                    case 6:
+                        SaisieElecteur.InfosInscriptionReferendum inscr =
+                                SaisieElecteur.demanderInformationsInscriptionReferendum();
+                        String resultatInscr = ElecteurService.inscrireElecteurReferendum(
+                                socket,
+                                inscr.getIdReferendum(),
+                                inscr.getIdElecteur()
+                        );
+                        System.out.println("[CLIENT] " + resultatInscr);
+                        break;
 
                     case 0:
                         System.out.println("Fermeture de la session électeur. Au revoir !");
