@@ -308,3 +308,53 @@ EXCEPTION
 END;
 /
 SHOW ERRORS;
+--------------------------------------------------------------------
+-- Inscrire un electeur a un referendum
+--------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE inscrireElecteurReferendum
+    (p_idReferendum  IN Referendums.idReferendum%TYPE,
+     p_idUtilisateur IN Electeurs.idUtilisateur%TYPE,
+     p_message       OUT VARCHAR) IS
+    v_statut      Referendums.statutReferendum%TYPE;
+    v_nbElecteurs NUMBER;
+BEGIN
+    -- 1. Le referendum existe-t-il ? NO_DATA_FOUND sinon
+    SELECT statutReferendum INTO v_statut
+    FROM Referendums
+    WHERE idReferendum = p_idReferendum;
+
+    -- 2. On n'inscrit personne sur un scrutin deja lance
+    IF v_statut <> 'EN_PREPARATION' THEN
+        p_message := 'Referendum deja lance : inscription impossible';
+        RETURN;
+    END IF;
+
+    -- 3. L'electeur existe-t-il ?
+    SELECT COUNT(*) INTO v_nbElecteurs
+    FROM Electeurs
+    WHERE idUtilisateur = p_idUtilisateur;
+
+    IF v_nbElecteurs = 0 THEN
+        p_message := 'Cet electeur n''existe pas';
+        RETURN;
+    END IF;
+
+    -- 4. Inscription : la cle primaire (idReferendum, idUtilisateur)
+    --    refuse d'elle-meme les doublons
+    INSERT INTO Inscriptions (idReferendum, idUtilisateur)
+    VALUES (p_idReferendum, p_idUtilisateur);
+    COMMIT;
+    p_message := 'OK';
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_message := 'Ce referendum n''existe pas';
+    WHEN DUP_VAL_ON_INDEX THEN
+        ROLLBACK;
+        p_message := 'Cet electeur est deja inscrit a ce referendum';
+    WHEN OTHERS THEN
+        ROLLBACK;
+        p_message := 'Inscription impossible';
+END;
+/
+SHOW ERRORS
