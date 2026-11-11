@@ -37,6 +37,7 @@ public class ElecteurService {
                     .setPasswordChiffre(ByteString.copyFrom(mdpOctets))
                     .setNom(nom)
                     .setPrenom(prenom)
+                    .setJetonSession(jetonSession)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -114,6 +115,7 @@ public class ElecteurService {
         try {
             DeleteElecteurRequest request = DeleteElecteurRequest.newBuilder()
                     .setElecteurId(electeurId)
+                    .setJetonSession(jetonSession)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -142,6 +144,7 @@ public class ElecteurService {
                     .setLogin(login)
                     .setNom(nom)
                     .setPrenom(prenom)
+                    .setJetonSession(jetonSession)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
