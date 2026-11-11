@@ -253,4 +253,55 @@ public class AuthentificationDAO {
             cx.close();
         }
     }
+        /**
+     * Lance un referendum
+     * Reserve a l'organisateur : c'est a l'appelant d'avoir verifie le role.
+     */
+    public static String lancerReferendum(String idReferendum) throws SQLException {
+
+        if (idReferendum == null || idReferendum.trim().isEmpty() || idReferendum.length() > 5) {
+            return "Identifiant referendum invalide : 5 caracteres maximum";
+        }
+
+        Connection cx = BaseDeDonnees.ouvrir();
+        try {
+            CallableStatement proc = cx.prepareCall("{ call lancerReferendum(?, ?) }");
+            proc.setString(1, idReferendum);
+            proc.registerOutParameter(2, Types.VARCHAR);
+            proc.execute();
+
+            String message = proc.getString(2);
+            proc.close();
+            return message;
+
+        } finally {
+            cx.close();
+        }
+    }
+
+    /**
+     * Cloture un referendum .
+     * Reserve a l'organisateur.
+     */
+    public static String cloturerReferendum(String idReferendum) throws SQLException {
+
+        if (idReferendum == null || idReferendum.trim().isEmpty() || idReferendum.length() > 5) {
+            return "Identifiant referendum invalide : 5 caracteres maximum";
+        }
+
+        Connection cx = BaseDeDonnees.ouvrir();
+        try {
+            CallableStatement proc = cx.prepareCall("{ call cloturerReferendum(?, ?) }");
+            proc.setString(1, idReferendum);
+            proc.registerOutParameter(2, Types.VARCHAR);
+            proc.execute();
+
+            String message = proc.getString(2);
+            proc.close();
+            return message;
+
+        } finally {
+            cx.close();
+        }
+    }
 }
