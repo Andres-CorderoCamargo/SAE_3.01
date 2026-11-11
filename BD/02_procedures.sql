@@ -358,3 +358,49 @@ EXCEPTION
 END;
 /
 SHOW ERRORS
+	
+--------------------------------------------------------------------
+-- Attribuer la cle publique d'un scrutateur a un referendum
+--------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE attribuerClePublique
+    (p_idReferendum IN Referendums.idReferendum%TYPE,
+     p_idScrutateur IN Utilisateurs.idUtilisateur%TYPE,
+     p_clePublique  IN ClesReferendum.clePublique%TYPE,
+     p_message      OUT VARCHAR) IS
+    v_statut Referendums.statutReferendum%TYPE;
+    v_role   Utilisateurs.roleUtilisateur%TYPE;
+BEGIN
+    SELECT statutReferendum INTO v_statut
+    FROM Referendums
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_statut <> 'EN_PREPARATION' THEN
+        p_message := 'Referendum deja lance : la cle ne peut plus changer';
+        RETURN;
+    END IF;
+
+    SELECT roleUtilisateur INTO v_role
+    FROM Utilisateurs
+    WHERE idUtilisateur = p_idScrutateur;
+
+    IF v_role <> 'SCRUTATEUR' THEN
+        p_message := 'Cet utilisateur n''est pas scrutateur';
+        RETURN;
+    END IF;
+
+    INSERT INTO ClesReferendum (idReferendum, idScrutateur, clePublique)
+    VALUES (p_idReferendum, p_idScrutateur, p_clePublique);
+    COMMIT;
+    p_message := 'OK';
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_message := 'Ce referendum ou ce scrutateur n''existe pas';
+    WHEN DUP_VAL_ON_INDEX THEN
+        ROLLBACK;
+        p_message := 'Ce referendum a deja une cle publique';
+    WHEN OTHERS THEN
+        ROLLBACK;
+        p_message := 'Attribution impossible';
+END;
+/
