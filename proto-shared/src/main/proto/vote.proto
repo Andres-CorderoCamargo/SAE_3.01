@@ -59,6 +59,7 @@ message RegisterRequest {
   bytes password_chiffre = 3;
   string nom = 4 ;
   string prenom = 5;
+  string jeton_session = 6;
 }
 
 message RegisterResponse {
@@ -82,6 +83,7 @@ message ClientMessage {
 
 message DeleteElecteurRequest {
   string electeur_id = 1;
+  string jeton_session = 2;
 }
 
 message DeleteElecteurResponse {
@@ -94,6 +96,7 @@ message UpdateElecteurRequest {
   string login = 2;
   string nom = 3;
   string prenom = 4;
+  string jeton_session = 5;
 }
 message UpdateElecteurResponse {
   bool success = 1;
