@@ -62,6 +62,8 @@ public class SaisieElecteur {
         System.out.println("4. Supprimer un électeur (organisateur)");
         System.out.println("5. Modifier un électeur (organisateur)");
         System.out.println("6. Inscrire un électeur à un référendum (organisateur)");
+        System.out.println("7. Lancer un référendum (organisateur)");
+        System.out.println("8. Clôturer un référendum (organisateur)");
         System.out.println("0. Quitter");
         System.out.print("Faites votre choix : ");
 
