@@ -88,6 +88,17 @@ public class electeur {
                         );
                         System.out.println("[CLIENT] " + resultatInscr);
                         break;
+                    case 7:
+                        String idLancer = SaisieElecteur.demanderIdReferendum("LANCEMENT D'UN RÉFÉRENDUM");
+                        System.out.println("[CLIENT] "
+                                + ElecteurService.lancerReferendum(socket, idLancer));
+                        break;
+
+                    case 8:
+                        String idCloturer = SaisieElecteur.demanderIdReferendum("CLÔTURE D'UN RÉFÉRENDUM");
+                        System.out.println("[CLIENT] "
+                                + ElecteurService.cloturerReferendum(socket, idCloturer));
+                        break;
 
                     case 0:
                         System.out.println("Fermeture de la session électeur. Au revoir !");
