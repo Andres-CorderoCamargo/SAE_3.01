@@ -347,4 +347,73 @@ public class systeme {
         response.writeDelimitedTo(socket.getOutputStream());
         socket.getOutputStream().flush();
     }
+        private static void traiterLancement(LancerReferendumRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Lancement demandé pour : " + request.getReferendumId());
+
+        String idReferendum = request.getReferendumId().trim();
+        boolean success;
+        String message;
+
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Lancement refusé : pas organisateur");
+
+        } else if (idReferendum.isEmpty()) {
+            success = false;
+            message = "Échec : identifiant du référendum obligatoire.";
+        } else {
+            try {
+                message = AuthentificationDAO.lancerReferendum(idReferendum);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        LancerReferendumResponse response = LancerReferendumResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
+
+    private static void traiterCloture(CloturerReferendumRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Clôture demandée pour : " + request.getReferendumId());
+
+        String idReferendum = request.getReferendumId().trim();
+        boolean success;
+        String message;
+
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Clôture refusée : pas organisateur");
+
+        } else if (idReferendum.isEmpty()) {
+            success = false;
+            message = "Échec : identifiant du référendum obligatoire.";
+        } else {
+            try {
+                message = AuthentificationDAO.cloturerReferendum(idReferendum);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        CloturerReferendumResponse response = CloturerReferendumResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
 }
