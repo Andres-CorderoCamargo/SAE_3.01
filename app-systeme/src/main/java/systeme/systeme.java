@@ -14,12 +14,26 @@ public class systeme {
 
     private static final ConcurrentHashMap<String, InfosStockageElecteur> baseElecteursTemporaire = new ConcurrentHashMap<>();
 
-    // Pour retenir qui est connecté : jeton -> utilisateur. et vide quand le serveur redémarre.
+    // Pour retenir qui est connecté : jeton -> utilisateur. Vidé quand le serveur redémarre.
     private static final ConcurrentHashMap<String, Connecte> sessions = new ConcurrentHashMap<>();
 
     public static class Connecte {
         public String idUtilisateur;
         public String role;
+    }
+
+    /** Message unique de refus : on ne dit pas si c'est le jeton ou le rôle qui ne va pas. */
+    private static final String REFUS = "Action réservée à l'organisateur. Connectez-vous d'abord.";
+
+    /**
+     * Dit si le jeton correspond a une session ouverte par un ORGANISATEUR.
+     */
+    private static boolean estOrganisateur(String jeton) {
+        if (jeton == null || jeton.isEmpty()) {
+            return false;
+        }
+        Connecte c = sessions.get(jeton);
+        return c != null && c.role.equals("ORGANISATEUR");
     }
 
     public static void main(String[] args) {
@@ -78,7 +92,15 @@ public class systeme {
 
                     } else if (clientMsg.hasUpdateElecteurRequest()) {
                         traiterModification(clientMsg.getUpdateElecteurRequest(), s);
+                        
+                    } else if (clientMsg.hasInscrireElecteurRequest()) {
+                        traiterInscriptionReferendum(clientMsg.getInscrireElecteurRequest(), s);
+                    
+                    } else if (clientMsg.hasLancerReferendumRequest()) {
+                        traiterLancement(clientMsg.getLancerReferendumRequest(), s);
 
+                    } else if (clientMsg.hasCloturerReferendumRequest()) {
+                        traiterCloture(clientMsg.getCloturerReferendumRequest(), s);
                     } else {
                         System.out.println("[SERVEUR] Type de message inconnu ou non géré.");
                     }
@@ -130,6 +152,10 @@ public class systeme {
             } catch (SQLException e) {
                 message = "Erreur base de données";
                 System.err.println("[SERVEUR] " + e.getMessage());
+            } catch (IllegalStateException e) {
+                // Poivre SAE_POIVRE non configuré : erreur du serveur, pas du client.
+                message = "Erreur interne du serveur, réessayez plus tard.";
+                System.err.println("[SERVEUR] Vérification impossible : " + e.getMessage());
             }
         }
 
@@ -157,8 +183,12 @@ public class systeme {
         boolean success;
         String message;
 
-        // Vérifications de base
-        if (electeurId.isEmpty() || login.isEmpty() || mdpClair.isEmpty()
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Inscription refusée : pas organisateur");
+
+        } else if (electeurId.isEmpty() || login.isEmpty() || mdpClair.isEmpty()
                 || nom.isEmpty() || prenom.isEmpty()) {
             success = false;
             message = "Échec : tous les champs sont obligatoires.";
@@ -180,6 +210,11 @@ public class systeme {
                 success = false;
                 message = "Erreur base de données";
                 System.err.println("[SERVEUR] " + e.getMessage());
+            } catch (IllegalStateException e) {
+                // Poivre SAE_POIVRE non configuré : erreur du serveur, pas du client.
+                success = false;
+                message = "Erreur interne du serveur, réessayez plus tard.";
+                System.err.println("[SERVEUR] Hachage impossible : " + e.getMessage());
             }
         }
 
@@ -212,14 +247,20 @@ public class systeme {
         boolean success;
         String message;
 
-        try {
-            // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
-            message = AuthentificationDAO.supprimerElecteur(electeurId);
-            success = message.equals("OK");
-        } catch (SQLException e) {
+        if (!estOrganisateur(request.getJetonSession())) {
             success = false;
-            message = "Erreur base de données";
-            System.err.println("[SERVEUR] " + e.getMessage());
+            message = REFUS;
+            System.out.println("[SERVEUR] Suppression refusée : pas organisateur");
+
+        } else {
+            try {
+                message = AuthentificationDAO.supprimerElecteur(electeurId);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
         }
 
         DeleteElecteurResponse response = DeleteElecteurResponse.newBuilder()
@@ -246,12 +287,16 @@ public class systeme {
         boolean success;
         String message;
 
-        if (electeurId.isEmpty() || login.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Modification refusée : pas organisateur");
+
+        } else if (electeurId.isEmpty() || login.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
             success = false;
             message = "Échec : tous les champs sont obligatoires.";
         } else {
             try {
-                // TODO: vérifier ici que l'utilisateur connecté est ORGANISATEUR
                 message = AuthentificationDAO.modifierElecteur(electeurId, login, nom, prenom);
                 success = message.equals("OK");
 
@@ -267,6 +312,112 @@ public class systeme {
         }
 
         UpdateElecteurResponse response = UpdateElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
+        private static void traiterInscriptionReferendum(InscrireElecteurRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Inscription de " + request.getElecteurId()
+                + " au référendum " + request.getReferendumId());
+
+        String idReferendum = request.getReferendumId().trim();
+        String idElecteur = request.getElecteurId().trim();
+
+        boolean success;
+        String message;
+
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Inscription refusée : pas organisateur");
+
+        } else if (idReferendum.isEmpty() || idElecteur.isEmpty()) {
+            success = false;
+            message = "Échec : tous les champs sont obligatoires.";
+        } else {
+            try {
+                message = AuthentificationDAO.inscrireElecteurReferendum(idReferendum, idElecteur);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        InscrireElecteurResponse response = InscrireElecteurResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
+        private static void traiterLancement(LancerReferendumRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Lancement demandé pour : " + request.getReferendumId());
+
+        String idReferendum = request.getReferendumId().trim();
+        boolean success;
+        String message;
+
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Lancement refusé : pas organisateur");
+
+        } else if (idReferendum.isEmpty()) {
+            success = false;
+            message = "Échec : identifiant du référendum obligatoire.";
+        } else {
+            try {
+                message = AuthentificationDAO.lancerReferendum(idReferendum);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        LancerReferendumResponse response = LancerReferendumResponse.newBuilder()
+                .setSuccess(success)
+                .setMessage(message)
+                .build();
+
+        response.writeDelimitedTo(socket.getOutputStream());
+        socket.getOutputStream().flush();
+    }
+
+    private static void traiterCloture(CloturerReferendumRequest request, Socket socket) throws IOException {
+        System.out.println("[SERVEUR] Clôture demandée pour : " + request.getReferendumId());
+
+        String idReferendum = request.getReferendumId().trim();
+        boolean success;
+        String message;
+
+        if (!estOrganisateur(request.getJetonSession())) {
+            success = false;
+            message = REFUS;
+            System.out.println("[SERVEUR] Clôture refusée : pas organisateur");
+
+        } else if (idReferendum.isEmpty()) {
+            success = false;
+            message = "Échec : identifiant du référendum obligatoire.";
+        } else {
+            try {
+                message = AuthentificationDAO.cloturerReferendum(idReferendum);
+                success = message.equals("OK");
+            } catch (SQLException e) {
+                success = false;
+                message = "Erreur base de données";
+                System.err.println("[SERVEUR] " + e.getMessage());
+            }
+        }
+
+        CloturerReferendumResponse response = CloturerReferendumResponse.newBuilder()
                 .setSuccess(success)
                 .setMessage(message)
                 .build();

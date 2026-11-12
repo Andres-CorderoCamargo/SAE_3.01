@@ -13,6 +13,8 @@ import java.sql.Types;
 
 // Tests de l'authentification. Ils écrivent dans la vraie base, donc ils
 // créent leurs comptes et les effacent après (on peut les relancer).
+// Ils ont besoin des variables ORACLE_URL, ORACLE_USER, ORACLE_PASSWORD et
+// SAE_POIVRE (le poivre du hachage des mots de passe, cf. MotDePasse).
 public class TestAuthentification {
 
     private static int ok = 0, ko = 0;

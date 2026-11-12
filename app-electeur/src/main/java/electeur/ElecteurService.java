@@ -37,6 +37,7 @@ public class ElecteurService {
                     .setPasswordChiffre(ByteString.copyFrom(mdpOctets))
                     .setNom(nom)
                     .setPrenom(prenom)
+                    .setJetonSession(jetonSession)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -66,11 +67,6 @@ public class ElecteurService {
 
     /**
      * Envoie un login et un mot de passe au serveur et recupere la reponse.
-     *
-     * @param socket     la socket connectee au serveur
-     * @param login      le login saisi
-     * @param motDePasse le mot de passe saisi, en clair
-     * @return le message a afficher a l'utilisateur
      */
     public static String seConnecter(Socket socket, String login, String motDePasse) {
         try {
@@ -114,6 +110,7 @@ public class ElecteurService {
         try {
             DeleteElecteurRequest request = DeleteElecteurRequest.newBuilder()
                     .setElecteurId(electeurId)
+                    .setJetonSession(jetonSession)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -142,6 +139,7 @@ public class ElecteurService {
                     .setLogin(login)
                     .setNom(nom)
                     .setPrenom(prenom)
+                    .setJetonSession(jetonSession)
                     .build();
 
             ClientMessage clientMsg = ClientMessage.newBuilder()
@@ -162,6 +160,81 @@ public class ElecteurService {
         }
     }
 
+    public static String inscrireElecteurReferendum(Socket socket, String idReferendum, String idElecteur) {
+        try {
+            InscrireElecteurRequest request = InscrireElecteurRequest.newBuilder()
+                    .setReferendumId(idReferendum)
+                    .setElecteurId(idElecteur)
+                    .setJetonSession(jetonSession)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setInscrireElecteurRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            InscrireElecteurResponse response =
+                    InscrireElecteurResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
+
+    public static String lancerReferendum(Socket socket, String idReferendum) {
+        try {
+            LancerReferendumRequest request = LancerReferendumRequest.newBuilder()
+                    .setReferendumId(idReferendum)
+                    .setJetonSession(jetonSession)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setLancerReferendumRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            LancerReferendumResponse response =
+                    LancerReferendumResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
+
+    public static String cloturerReferendum(Socket socket, String idReferendum) {
+        try {
+            CloturerReferendumRequest request = CloturerReferendumRequest.newBuilder()
+                    .setReferendumId(idReferendum)
+                    .setJetonSession(jetonSession)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setCloturerReferendumRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            CloturerReferendumResponse response =
+                    CloturerReferendumResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
 
     private static byte[] preparerMotDePasse(String mdpClair) {
         return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);

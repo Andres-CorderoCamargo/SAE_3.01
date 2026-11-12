@@ -59,6 +59,7 @@ message RegisterRequest {
   bytes password_chiffre = 3;
   string nom = 4 ;
   string prenom = 5;
+  string jeton_session = 6;
 }
 
 message RegisterResponse {
@@ -76,12 +77,16 @@ message ClientMessage {
     DeleteElecteurRequest delete_electeur_request = 5;
     UpdateElecteurRequest update_electeur_request = 6;
     LoginRequest login_request = 7;
+    InscrireElecteurRequest inscrire_electeur_request = 8;
+    LancerReferendumRequest lancer_referendum_request = 9;
+    CloturerReferendumRequest cloturer_referendum_request = 10;
   }
 }
 
 
 message DeleteElecteurRequest {
   string electeur_id = 1;
+  string jeton_session = 2;
 }
 
 message DeleteElecteurResponse {
@@ -94,6 +99,7 @@ message UpdateElecteurRequest {
   string login = 2;
   string nom = 3;
   string prenom = 4;
+  string jeton_session = 5;
 }
 message UpdateElecteurResponse {
   bool success = 1;
@@ -111,4 +117,33 @@ message LoginResponse {
   string jeton_session = 3;
   string role = 4;            // ELECTEUR, ORGANISATEUR ou SCRUTATEUR
   bool doit_changer_mdp = 5;
+}
+message InscrireElecteurRequest {
+  string referendum_id = 1;
+  string electeur_id = 2;
+  string jeton_session = 3;
+}
+
+message InscrireElecteurResponse {
+  bool success = 1;
+  string message = 2;
+}
+message LancerReferendumRequest {
+  string referendum_id = 1;
+  string jeton_session = 2;
+}
+
+message LancerReferendumResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message CloturerReferendumRequest {
+  string referendum_id = 1;
+  string jeton_session = 2;
+}
+
+message CloturerReferendumResponse {
+  bool success = 1;
+  string message = 2;
 }

@@ -75,3 +75,15 @@ CONSTRAINT fk_Inscriptions_idReferendum
     FOREIGN KEY (idReferendum) REFERENCES Referendums(idReferendum),
 CONSTRAINT fk_Inscriptions_idUtilisateur
     FOREIGN KEY (idUtilisateur) REFERENCES Electeurs(idUtilisateur));
+
+
+
+CREATE TABLE ClesReferendum
+(idReferendum VARCHAR(5),
+ idScrutateur VARCHAR(5) NOT NULL,
+ clePublique VARCHAR(4000) NOT NULL,
+CONSTRAINT pk_ClesReferendum PRIMARY KEY (idReferendum),
+CONSTRAINT fk_ClesReferendum_idReferendum
+    FOREIGN KEY (idReferendum) REFERENCES Referendums(idReferendum),
+CONSTRAINT fk_ClesReferendum_idScrutateur
+    FOREIGN KEY (idScrutateur) REFERENCES Utilisateurs(idUtilisateur));
