@@ -19,6 +19,13 @@
             <artifactId>proto-shared</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
+        <!-- ElGamal (module crypto) : le scrutateur dechiffre le total avec Dechiffrement.decrypt -->
+        <dependency>
+            <groupId>com.g3.vote</groupId>
+            <artifactId>crypto</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>
