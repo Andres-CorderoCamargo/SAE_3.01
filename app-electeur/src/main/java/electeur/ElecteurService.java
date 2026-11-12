@@ -67,11 +67,6 @@ public class ElecteurService {
 
     /**
      * Envoie un login et un mot de passe au serveur et recupere la reponse.
-     *
-     * @param socket     la socket connectee au serveur
-     * @param login      le login saisi
-     * @param motDePasse le mot de passe saisi, en clair
-     * @return le message a afficher a l'utilisateur
      */
     public static String seConnecter(Socket socket, String login, String motDePasse) {
         try {
@@ -165,80 +160,7 @@ public class ElecteurService {
         }
     }
 
-
-    private static byte[] preparerMotDePasse(String mdpClair) {
-        return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-    }
-        private static void traiterLancement(LancerReferendumRequest request, Socket socket) throws IOException {
-        System.out.println("[SERVEUR] Lancement demandé pour : " + request.getReferendumId());
-
-        String idReferendum = request.getReferendumId().trim();
-        boolean success;
-        String message;
-
-        if (!estOrganisateur(request.getJetonSession())) {
-            success = false;
-            message = REFUS;
-            System.out.println("[SERVEUR] Lancement refusé : pas organisateur");
-
-        } else if (idReferendum.isEmpty()) {
-            success = false;
-            message = "Échec : identifiant du référendum obligatoire.";
-        } else {
-            try {
-                message = AuthentificationDAO.lancerReferendum(idReferendum);
-                success = message.equals("OK");
-            } catch (SQLException e) {
-                success = false;
-                message = "Erreur base de données";
-                System.err.println("[SERVEUR] " + e.getMessage());
-            }
-        }
-
-        LancerReferendumResponse response = LancerReferendumResponse.newBuilder()
-                .setSuccess(success)
-                .setMessage(message)
-                .build();
-
-        response.writeDelimitedTo(socket.getOutputStream());
-        socket.getOutputStream().flush();
-    }
-
-    private static void traiterCloture(CloturerReferendumRequest request, Socket socket) throws IOException {
-        System.out.println("[SERVEUR] Clôture demandée pour : " + request.getReferendumId());
-
-        String idReferendum = request.getReferendumId().trim();
-        boolean success;
-        String message;
-
-        if (!estOrganisateur(request.getJetonSession())) {
-            success = false;
-            message = REFUS;
-            System.out.println("[SERVEUR] Clôture refusée : pas organisateur");
-
-        } else if (idReferendum.isEmpty()) {
-            success = false;
-            message = "Échec : identifiant du référendum obligatoire.";
-        } else {
-            try {
-                message = AuthentificationDAO.cloturerReferendum(idReferendum);
-                success = message.equals("OK");
-            } catch (SQLException e) {
-                success = false;
-                message = "Erreur base de données";
-                System.err.println("[SERVEUR] " + e.getMessage());
-            }
-        }
-
-        CloturerReferendumResponse response = CloturerReferendumResponse.newBuilder()
-                .setSuccess(success)
-                .setMessage(message)
-                .build();
-
-        response.writeDelimitedTo(socket.getOutputStream());
-        socket.getOutputStream().flush();
-    }
-        public static String inscrireElecteurReferendum(Socket socket, String idReferendum, String idElecteur) {
+    public static String inscrireElecteurReferendum(Socket socket, String idReferendum, String idElecteur) {
         try {
             InscrireElecteurRequest request = InscrireElecteurRequest.newBuilder()
                     .setReferendumId(idReferendum)
@@ -262,5 +184,59 @@ public class ElecteurService {
             System.err.println("Erreur réseau/flux : " + e.getMessage());
             return "Erreur réseau";
         }
+    }
+
+    public static String lancerReferendum(Socket socket, String idReferendum) {
+        try {
+            LancerReferendumRequest request = LancerReferendumRequest.newBuilder()
+                    .setReferendumId(idReferendum)
+                    .setJetonSession(jetonSession)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setLancerReferendumRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            LancerReferendumResponse response =
+                    LancerReferendumResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
+
+    public static String cloturerReferendum(Socket socket, String idReferendum) {
+        try {
+            CloturerReferendumRequest request = CloturerReferendumRequest.newBuilder()
+                    .setReferendumId(idReferendum)
+                    .setJetonSession(jetonSession)
+                    .build();
+
+            ClientMessage clientMsg = ClientMessage.newBuilder()
+                    .setCloturerReferendumRequest(request)
+                    .build();
+
+            clientMsg.writeDelimitedTo(socket.getOutputStream());
+            socket.getOutputStream().flush();
+
+            CloturerReferendumResponse response =
+                    CloturerReferendumResponse.parseDelimitedFrom(socket.getInputStream());
+
+            return (response != null) ? response.getMessage() : "Réponse vide du serveur";
+
+        } catch (IOException e) {
+            System.err.println("Erreur réseau/flux : " + e.getMessage());
+            return "Erreur réseau";
+        }
+    }
+
+    private static byte[] preparerMotDePasse(String mdpClair) {
+        return mdpClair.getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 }
