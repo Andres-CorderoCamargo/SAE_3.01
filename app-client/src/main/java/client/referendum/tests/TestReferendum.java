@@ -12,9 +12,9 @@ public class TestReferendum {
     private static final String Q = "Faut-il passer à la semaine de 4 jours ?";
 
     public static void main(String[] args) {
-        // Comme ça c'est plus facile de repérer
         testsCreation();
         testsModification();
+        testsSuppression();
 
         System.out.println("\nRésultat : " + ok + " OK, " + ko + " KO");
     }
@@ -152,6 +152,53 @@ public class TestReferendum {
         System.out.println("================ Fin test modification ================");
     }
 
+    // Tous les tests de la méthode supprimer()
+    private static void testsSuppression() {
+        Message supprime = new Message(MessageType.REFERENDUM_DELETED);
+        System.out.println("================ Début test suppression ================");
+
+        // Succès
+        testerSuppSucces("Suppr correcte", new fakeConnection(supprime), TOKEN, "42");
+
+        // Contenu du message envoyé
+        verifierMessageSuppression(supprime);
+
+        // Sans réseau
+        testerSuppSansReseau("Suppr : token null", null, "42",
+                ReferendumError.NON_CONNECTE);
+        testerSuppSansReseau("Suppr : id null", TOKEN, null,
+                ReferendumError.CHAMPS_INVALIDES);
+        testerSuppSansReseau("Suppr : id vide", TOKEN, "  ",
+                ReferendumError.CHAMPS_INVALIDES);
+
+        // Erreurs renvoyées par l'urne
+        testerSuppError("Suppr serveur : INVALID_TOKEN", new fakeConnection(erreur("INVALID_TOKEN")),
+                TOKEN, "42", ReferendumError.NON_CONNECTE);
+        testerSuppError("Suppr serveur : NOT_AUTHORIZED", new fakeConnection(erreur("NOT_AUTHORIZED")),
+                TOKEN, "42", ReferendumError.NON_AUTORISE);
+        testerSuppError("Suppr serveur : REFERENDUM_NOT_FOUND", new fakeConnection(erreur("REFERENDUM_NOT_FOUND")),
+                TOKEN, "42", ReferendumError.REFERENDUM_INTROUVABLE);
+        testerSuppError("Suppr serveur : VOTES_ALREADY_RECEIVED", new fakeConnection(erreur("VOTES_ALREADY_RECEIVED")),
+                TOKEN, "42", ReferendumError.VOTES_DEJA_RECUS);
+        testerSuppError("Suppr serveur : ELECTION_CLOSED", new fakeConnection(erreur("ELECTION_CLOSED")),
+                TOKEN, "42", ReferendumError.REFERENDUM_TERMINE);
+        testerSuppError("Suppr serveur : BAD_FORMAT", new fakeConnection(erreur("BAD_FORMAT")),
+                TOKEN, "42", ReferendumError.CHAMPS_INVALIDES);
+        testerSuppError("Suppr serveur : code inconnu", new fakeConnection(erreur("QUELQUE_CHOSE")),
+                TOKEN, "42", ReferendumError.ERREUR_SERVEUR);
+
+        // Communication
+        testerSuppError("Suppr : timeout", new fakeConnection(null),
+                TOKEN, "42", ReferendumError.TIMEOUT);
+        testerSuppError("Suppr : panne réseau", new fakeConnection(null, true),
+                TOKEN, "42", ReferendumError.ERREUR_RESEAU);
+
+        // Hors protocole
+        testerSuppError("Suppr : réponse REFERENDUM_MODIFIED", new fakeConnection(new Message(MessageType.REFERENDUM_MODIFIED)),
+                TOKEN, "42", ReferendumError.REPONSE_INATTENDUE);
+
+        System.out.
+
     // Vérifie que le service construit bien le message CREATE_REFERENDUM
     // (types, champs, espaces retirés par trim, durée convertie en texte)
     private static void verifierMessageEnvoye(Message reponse) {
@@ -277,5 +324,53 @@ public class TestReferendum {
             ko++;
             System.out.println("[KO] " + nom);
         }
+    }
+
+    // Vérifie le message DELETE_REFERENDUM construit par le service
+    private static void verifierMessageSuppression(Message reponse) {
+        fakeConnection c = new fakeConnection(reponse);
+        try {
+            new ReferendumService(c).supprimer(TOKEN, " 42 ");
+        } catch (ReferendumException e) {
+            verifier("Message suppr : exception inattendue " + e.getError(), false);
+            return;
+        }
+        Message m = c.lastSent;
+        verifier("Message suppr : un message a été envoyé", m != null);
+
+        if (m == null) {
+            return;
+        }
+        verifier("Message suppr : une seule fois", c.sendCount == 1);
+        verifier("Message suppr : type DELETE_REFERENDUM", m.getType() == MessageType.DELETE_REFERENDUM);
+        verifier("Message suppr : token", TOKEN.equals(m.get("token")));
+        verifier("Message suppr : id sans espaces autour", "42".equals(m.get("id")));
+    }
+
+    private static void testerSuppSucces(String nom, Connection c, String token, String id) {
+        try {
+            new ReferendumService(c).supprimer(token, id);
+            verifier(nom, true);   // pas d'exception = succès :D
+        } catch (ReferendumException e) {
+            verifier(nom + " (exception inattendue : " + e.getError() + ")", false);
+        }
+    }
+
+    private static void testerSuppError(String nom, Connection c, String token, String id,
+        ReferendumError attendu) {
+        try {
+            new ReferendumService(c).supprimer(token, id);
+            verifier(nom + " (devait lancer une exception)", false);
+        } catch (ReferendumException e) {
+            verifier(nom + " -> " + e.getError(), e.getError() == attendu);
+        }
+    }
+
+    // Comme testerSuppError, mais vérifie aussi que send() ne soir été appelé
+    private static void testerSuppSansReseau(String nom, String token, String id,
+        ReferendumError attendu) {
+        fakeConnection c = new fakeConnection(new Message(MessageType.REFERENDUM_DELETED));
+        testerSuppError(nom, c, token, id, attendu);
+        verifier(nom + " : réseau non utilisé", !c.sendCalled);
     }
 }
