@@ -58,6 +58,26 @@ public class ReferendumService {
         echanger(m, MessageType.REFERENDUM_MODIFIED);
     }
 
+    // On veut supprimer un référendum existant (donc identifié par son id).
+    // Ne renvoie rien : si aucune exception n'est lancée, la suppression est faite.
+    public void supprimer(String token, String id) throws ReferendumException {
+        // Pas de token : pas de réseau
+        if (token == null) {
+            throw new ReferendumException(ReferendumError.NON_CONNECTE);
+        }
+        // Sans identifiant, on ne sait pas quoi supprimer..
+        if (id == null || id.isBlank()) {
+            throw new ReferendumException(ReferendumError.CHAMPS_INVALIDES);
+        }
+
+        Message m = new Message(MessageType.DELETE_REFERENDUM);
+        m.add("token", token);
+        m.add("id", id.trim());
+
+        // On attend REFERENDUM_DELETED, la réponse n'a pas de contenu utile
+        echanger(m, MessageType.REFERENDUM_DELETED);
+    }
+
     private Message construireMessage(MessageType type, String token, String question,
                                       String option1, String option0, int dureeMinutes) {
         Message m = new Message(type);

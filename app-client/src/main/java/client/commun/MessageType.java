@@ -8,4 +8,6 @@ public enum MessageType {
     ERROR, // Evident xd
     MODIFY_REFERENDUM,  //
     REFERENDUM_MODIFIED,  //
+    DELETE_REFERENDUM,
+    REFERENDUM_DELETED
 }
