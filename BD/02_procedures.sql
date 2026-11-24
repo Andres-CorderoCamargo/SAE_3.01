@@ -318,8 +318,8 @@ SHOW ERRORS;
 CREATE OR REPLACE PROCEDURE enregistrerVote (
     p_idReferendum IN Referendums.idReferendum%TYPE,
     p_idElecteur   IN Inscriptions.idUtilisateur%TYPE,
-    p_bulletinU    IN BLOB,
-    p_bulletinV    IN BLOB,
+    p_bulletinU    IN RAW,
+    p_bulletinV    IN RAW,
     p_code         OUT VARCHAR2
 ) IS
     v_nbRef      NUMBER;
