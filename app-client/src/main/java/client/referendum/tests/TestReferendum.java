@@ -197,7 +197,8 @@ public class TestReferendum {
         testerSuppError("Suppr : réponse REFERENDUM_MODIFIED", new fakeConnection(new Message(MessageType.REFERENDUM_MODIFIED)),
                 TOKEN, "42", ReferendumError.REPONSE_INATTENDUE);
 
-        System.out.
+        System.out.println("================ Fin test suppression ================");
+    }
 
     // Vérifie que le service construit bien le message CREATE_REFERENDUM
     // (types, champs, espaces retirés par trim, durée convertie en texte)
@@ -315,17 +316,6 @@ public class TestReferendum {
         verifier(nom + " : réseau non utilisé", !c.sendCalled);
     }
 
-    private static void verifier(String nom, boolean condition) {
-        if (condition) {
-            ok++;
-            System.out.println("[OK] " + nom);
-        }
-        else {
-            ko++;
-            System.out.println("[KO] " + nom);
-        }
-    }
-
     // Vérifie le message DELETE_REFERENDUM construit par le service
     private static void verifierMessageSuppression(Message reponse) {
         fakeConnection c = new fakeConnection(reponse);
@@ -357,7 +347,7 @@ public class TestReferendum {
     }
 
     private static void testerSuppError(String nom, Connection c, String token, String id,
-        ReferendumError attendu) {
+                                        ReferendumError attendu) {
         try {
             new ReferendumService(c).supprimer(token, id);
             verifier(nom + " (devait lancer une exception)", false);
@@ -368,9 +358,20 @@ public class TestReferendum {
 
     // Comme testerSuppError, mais vérifie aussi que send() ne soir été appelé
     private static void testerSuppSansReseau(String nom, String token, String id,
-        ReferendumError attendu) {
+                                             ReferendumError attendu) {
         fakeConnection c = new fakeConnection(new Message(MessageType.REFERENDUM_DELETED));
         testerSuppError(nom, c, token, id, attendu);
         verifier(nom + " : réseau non utilisé", !c.sendCalled);
+    }
+
+    private static void verifier(String nom, boolean condition) {
+        if (condition) {
+            ok++;
+            System.out.println("[OK] " + nom);
+        }
+        else {
+            ko++;
+            System.out.println("[KO] " + nom);
+        }
     }
 }

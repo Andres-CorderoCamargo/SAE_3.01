@@ -1,5 +1,7 @@
 package electeur;
 
+import com.g3.vote.proto.VoteResponse;
+
 import java.io.IOException;
 import java.net.Socket;
 
@@ -51,8 +53,26 @@ public class electeur {
                         break;
 
                     case 3:
-                        // Vote
-                        System.out.println("[INFO] La fonctionnalité de vote est à implémenter dans ElecteurService.");
+                        SaisieElecteur.InfosVote vote = SaisieElecteur.demanderInformationsVote();
+                        if (vote.getVote() != 0 && vote.getVote() != 1) {
+                            System.out.println("[CLIENT] Le vote doit être 0 ou 1.");
+                            break;
+                        }
+                        byte[][] bulletin = BulletinFactice.fabriquer(vote.getVote());
+                        VoteResponse reponseVote = ElecteurService.voter(
+                                socket,
+                                vote.getElecteurId(),
+                                vote.getReferendumId(),
+                                bulletin[0],
+                                bulletin[1]
+                        );
+                        if (reponseVote.getSuccess()) {
+                            System.out.println("[CLIENT] " + reponseVote.getMessage());
+                        } else if (reponseVote.getIsLate()) {
+                            System.out.println("[CLIENT] Trop tard : " + reponseVote.getMessage());
+                        } else {
+                            System.out.println("[CLIENT] Vote refusé : " + reponseVote.getMessage());
+                        }
                         break;
 
                     case 4:
