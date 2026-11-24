@@ -486,3 +486,87 @@ END;
 /
 SHOW ERRORS;
 
+
+--------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE lancerReferendum
+    (p_idReferendum IN Referendums.idReferendum%TYPE,
+     p_message      OUT VARCHAR) IS
+    v_statut   Referendums.statutReferendum%TYPE;
+    v_nbCles   NUMBER;
+    v_nbInscr  NUMBER;
+BEGIN
+    SELECT statutReferendum INTO v_statut
+    FROM Referendums
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_statut <> 'EN_PREPARATION' THEN
+        p_message := 'Ce referendum n''est plus en preparation';
+        RETURN;
+    END IF;
+
+    -- Sans cle publique, aucun bulletin ne peut etre chiffre
+    SELECT COUNT(*) INTO v_nbCles
+    FROM ClesReferendum
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_nbCles = 0 THEN
+        p_message := 'Aucune cle publique : lancement impossible';
+        RETURN;
+    END IF;
+
+    -- Un scrutin sans electeur inscrit n'a pas de sens
+    SELECT COUNT(*) INTO v_nbInscr
+    FROM Inscriptions
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_nbInscr = 0 THEN
+        p_message := 'Aucun electeur inscrit : lancement impossible';
+        RETURN;
+    END IF;
+
+    UPDATE Referendums
+    SET statutReferendum = 'OUVERT'
+    WHERE idReferendum = p_idReferendum;
+    COMMIT;
+    p_message := 'OK';
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_message := 'Ce referendum n''existe pas';
+    WHEN OTHERS THEN
+        ROLLBACK;
+        p_message := 'Lancement impossible';
+END;
+/
+SHOW ERRORS;
+
+--------------------------------------------------------------------
+CREATE OR REPLACE PROCEDURE cloturerReferendum
+    (p_idReferendum IN Referendums.idReferendum%TYPE,
+     p_message      OUT VARCHAR) IS
+    v_statut Referendums.statutReferendum%TYPE;
+BEGIN
+    SELECT statutReferendum INTO v_statut
+    FROM Referendums
+    WHERE idReferendum = p_idReferendum;
+
+    IF v_statut <> 'OUVERT' THEN
+        p_message := 'Ce referendum n''est pas ouvert';
+        RETURN;
+    END IF;
+
+    UPDATE Referendums
+    SET statutReferendum = 'CLOTURE'
+    WHERE idReferendum = p_idReferendum;
+    COMMIT;
+    p_message := 'OK';
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        p_message := 'Ce referendum n''existe pas';
+    WHEN OTHERS THEN
+        ROLLBACK;
+        p_message := 'Cloture impossible';
+END;
+/
+SHOW ERRORS;
