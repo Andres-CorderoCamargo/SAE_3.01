@@ -1,6 +1,7 @@
 package electeur;
 
 import java.util.Scanner;
+import java.io.Console;
 
 public class SaisieElecteur {
 
@@ -23,8 +24,7 @@ public class SaisieElecteur {
         System.out.println("\n--- CONNEXION ---");
         System.out.print("Login : ");
         String login = scanner.nextLine().trim();
-        System.out.print("Mot de passe : ");
-        String motDePasse = scanner.nextLine();
+        String motDePasse = lireMotDePasse("Mot de passe : ");
         return new InfosConnexion(login, motDePasse);
     }
 
@@ -84,8 +84,7 @@ public class SaisieElecteur {
         System.out.print("Entrez le login : ");
         String login = scanner.nextLine();
 
-        System.out.print("Entrez le mot de passe : ");
-        String mdpClair = scanner.nextLine();
+        String mdpClair = lireMotDePasse("Entrez le mot de passe : ");
 
         System.out.print("Entrez le nom : ");
         String nom = scanner.nextLine().trim();
@@ -214,5 +213,15 @@ public class SaisieElecteur {
         System.out.println("\n--- " + titre + " ---");
         System.out.print("Identifiant du référendum : ");
         return scanner.nextLine().trim();
+    }
+
+    private static String lireMotDePasse(String invite) {
+        Console console = System.console();
+        if (console == null) {
+            System.out.println("(attention : saisie visible, pas de console disponible)");
+            System.out.print(invite);
+            return scanner.nextLine().trim();
+        }
+        return new String(console.readPassword(invite)).trim();
     }
 }
