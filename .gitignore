@@ -9,5 +9,6 @@ target/
 *.iml
 Thumbs.db
 .DS_Store
-*.logcp*.txt
+*.log
 */cp*.txt
+cp*.txt
