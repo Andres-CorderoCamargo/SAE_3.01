@@ -2,6 +2,7 @@ package systeme;
 
 import com.g3.vote.proto.*;
 import systeme.persistance.AuthentificationDAO;
+import systeme.reseaux.ServeurTLS;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -27,7 +28,7 @@ public class systeme {
         int port = 8080;
         System.out.println("[SERVEUR] Démarrage de l'urne sur le port " + port + "...");
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (ServerSocket serverSocket = ServeurTLS.ouvrir(port)) {
 
             while (true) {
                 // Attente d'un nouvel électeur

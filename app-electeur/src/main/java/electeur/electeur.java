@@ -2,6 +2,7 @@ package electeur;
 
 import java.io.IOException;
 import java.net.Socket;
+import client.reseaux.ClientTLS;
 
 public class electeur {
 
@@ -11,7 +12,7 @@ public class electeur {
 
         System.out.println("[CLIENT] Connexion en cours vers le serveur de vote...");
 
-        try (Socket socket = new Socket(serveurHost, serveurPort)) {
+        try (Socket socket = ClientTLS.connecter(serveurHost, serveurPort)) {
             System.out.println("[CLIENT] Connecté avec succès au serveur !");
 
             boolean continuer = true;
