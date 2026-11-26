@@ -15,6 +15,7 @@
         <module>app-electeur</module>
         <module>app-scrutateur</module>
         <module>app-systeme</module>
+        <module>tls-shared</module>
     </modules>
 <properties>
         <!-- Les sources et les tests contiennent des accents -->
